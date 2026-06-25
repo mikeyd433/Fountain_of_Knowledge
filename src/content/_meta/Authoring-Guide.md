@@ -108,3 +108,28 @@ npm run dev
 ```
 
 > [!note] Keep the tone terse and scannable — this is a cheat sheet, not prose.
+
+## Updating the app
+
+Pull the latest changes and relaunch. Open PowerShell and run:
+
+```bash
+cd $HOME\Fountain_of_Knowledge
+git restore package-lock.json
+git pull
+npm install
+npm run app:dev
+```
+
+To rebuild the installable app instead of running it from the terminal, use
+`npm run app:build` (in place of `npm run app:dev`), then run the installer at
+`dist-app\Fountain of Knowledge Setup 0.1.0.exe`.
+
+> [!tip] `git restore package-lock.json` just clears the change `npm install`
+> leaves behind so `git pull` won't complain. For routine updates later (no new
+> dependencies) you can skip `npm install` — `git pull` then `npm run app:dev`
+> is enough.
+
+> [!warning] If `git pull` reports a conflict on a file you didn't expect, stop
+> and check it rather than forcing the update — your notes live outside the
+> project folder, so they're not affected, but local code edits could be.
