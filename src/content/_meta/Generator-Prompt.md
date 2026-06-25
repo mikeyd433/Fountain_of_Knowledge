@@ -8,18 +8,52 @@ tags: [authoring, prompt, claude, generator]
 
 ## Reusable prompt
 
-Paste this into a fresh chat with Claude, fill in the topic, and it returns a
-ready-to-drop `.md` file for this reader.
+Paste this whole block into a fresh chat, fill in the topic at the bottom, and
+it returns ready-to-drop markdown for this reader. It describes the entire file
+structure, so the chat doesn't need anything else.
 
 ````text
-Write a reference section for my Fountain of Knowledge reader as a single
-markdown file. Start with YAML frontmatter: title, category, optional section,
-order, icon, tags. Use "## " for section headings. Render keyboard shortcuts as
-inline code joined with + (e.g. `Ctrl+S`). For shortcut lists, use a fenced
-```shortcuts block with "Action | Keys" lines. Use > [!tip] / > [!warning] /
-> [!note] / > [!danger] callouts where useful. Put commands in fenced code
-blocks. Keep the tone terse and scannable — this is a cheat sheet, not prose.
+You are writing reference notes for "Fountain of Knowledge", a markdown reader.
+Output ONLY markdown in a single code block I can copy, following this exact
+file structure:
+
+1. Start with YAML frontmatter:
+   ---
+   title: <Page Title>      # required
+   category: <Group>        # required — top-level sidebar group
+   section: <Subgroup>      # optional — nests under the category
+   icon: <emoji>            # optional — shown by the title
+   tags: [a, b, c]          # optional — feeds search
+   order: <number>          # optional — sort position within its group
+   ---
+
+2. Use "## " for section headings inside the page (not "# ").
+
+3. Keyboard shortcuts: inline code of keys joined with "+", e.g. `Ctrl+Shift+P`.
+   These auto-render as keycaps. Plain inline code like `config.ini` is left alone.
+
+4. Lists of shortcuts: a fenced block tagged shortcuts, one "Action | Keys"
+   per line:
+   ```shortcuts
+   Open action list     | Ctrl+Shift+P
+   Split item at cursor | S
+   ```
+
+5. Callouts: blockquotes starting with [!tip], [!note], [!warning], or [!danger]:
+   > [!tip] Helpful aside.
+
+6. Commands/code go in normal fenced code blocks (```bash, ```lua, etc.); they
+   get an automatic copy button.
+
+Keep it terse and scannable — a cheat sheet, not prose.
+
+MULTI-PAGE OPTION: if I ask for multiple pages, instead add `bundle: true` to
+the frontmatter and start EACH page with a "# Page Title" heading (still using
+"## " for sub-sections within a page). All pages share the same
+category/section/icon/tags. One bundle file expands into one page per "# " heading.
+
 Topic: <TOPIC>
+Pages (only if multiple): <PAGE 1>, <PAGE 2>, <PAGE 3>
 ````
 
 ## Then
@@ -32,18 +66,5 @@ That's it. (You can also drop it straight into the content folder — see the
 Authoring Guide for where that lives.)
 
 > [!tip] Use the `order` field if you want a specific file to sit at the top of
-> its group instead of alphabetical order.
-
-## Want a whole section in one file?
-
-Ask for a **bundle** and you'll get several pages from a single file:
-
-````text
-Make it a single bundle file: add `bundle: true` to the frontmatter and start
-each page with a `# Page Title` heading (use `## ` for sub-sections within a
-page). All pages share the same category/section/icon/tags.
-Topic: <TOPIC>  Pages: <PAGE 1>, <PAGE 2>, <PAGE 3>
-````
-
-Drop that one file and it expands into all those pages. See **Multi-page files**
-in the Authoring Guide for details.
+> its group instead of alphabetical order. For several pages from one file, fill
+> in the **Pages** line — see **Multi-page files** in the Authoring Guide.
