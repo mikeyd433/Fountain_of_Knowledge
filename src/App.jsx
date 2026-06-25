@@ -41,6 +41,23 @@ function Sidebar() {
     } catch (e) {}
   }, [expanded]);
 
+  // Always reveal the current page: expand every folder on the way to it.
+  // (This also opens a freshly-imported section the app navigates to.)
+  useEffect(() => {
+    const segs = currentRoute.split('/').filter(Boolean);
+    if (segs.length < 2) return; // need at least one ancestor folder
+    const ancestors = [];
+    for (let i = 1; i < segs.length; i++) {
+      ancestors.push(segs.slice(0, i).join('/'));
+    }
+    setExpanded((prev) => {
+      let changed = false;
+      const next = new Set(prev);
+      for (const a of ancestors) if (!next.has(a)) { next.add(a); changed = true; }
+      return changed ? next : prev;
+    });
+  }, [currentRoute]);
+
   const toggle = useCallback((path) => {
     setExpanded((prev) => {
       const next = new Set(prev);
