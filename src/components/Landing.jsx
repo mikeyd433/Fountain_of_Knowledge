@@ -22,8 +22,8 @@ export default function Landing() {
         <div className="landing-empty">
           <p>No reference files yet.</p>
           <p>
-            Drop a markdown file into <code>src/content/</code> and it appears
-            here automatically.
+            Drag a <code>.md</code> file anywhere onto this window to import it —
+            or drop one into <code>src/content/</code> directly.
           </p>
         </div>
       ) : (

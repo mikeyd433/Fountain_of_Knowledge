@@ -656,6 +656,77 @@ html.dark .shiki span {
 }
 
 /* ============================================================
+   Drag-and-drop import
+   ============================================================ */
+.sidebar-hint {
+  padding: 10px 14px;
+  border-top: 1px solid var(--border);
+  font-size: 11px;
+  color: var(--text-faint);
+}
+.sidebar-hint code {
+  background: var(--code-bg);
+  border-radius: 4px;
+  padding: 0 4px;
+  font-size: 10px;
+}
+
+.dropzone-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(8, 11, 15, 0.72);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none; /* let the drop reach the window handler */
+}
+.dropzone-card {
+  border: 2px dashed var(--accent);
+  border-radius: 18px;
+  padding: 40px 60px;
+  background: var(--bg-elev);
+  text-align: center;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.45);
+}
+.dropzone-icon {
+  font-size: 48px;
+  line-height: 1;
+}
+.dropzone-title {
+  font-size: 20px;
+  font-weight: 700;
+  margin-top: 10px;
+  color: var(--text);
+}
+.dropzone-sub {
+  font-size: 13px;
+  color: var(--text-dim);
+  margin-top: 4px;
+}
+
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 220;
+  padding: 11px 20px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.4);
+}
+.toast-ok {
+  background: #1a8f5a;
+}
+.toast-err {
+  background: #c4453f;
+}
+
+/* ============================================================
    Small screens
    ============================================================ */
 @media (max-width: 720px) {

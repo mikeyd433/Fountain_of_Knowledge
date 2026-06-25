@@ -152,3 +152,9 @@ function firstIcon(node) {
 }
 
 export const firstRoute = files.length ? files[0].route : null;
+
+// Compute the route a dropped file will have once written, using the exact
+// same derivation as the loader so we can navigate straight to it.
+export function routeForDropped(relPath, raw) {
+  return parseFile('../content/' + relPath, raw).route;
+}

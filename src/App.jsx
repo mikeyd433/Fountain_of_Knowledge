@@ -13,6 +13,7 @@ import ThemeToggle from './components/ThemeToggle.jsx';
 import Breadcrumb from './components/Breadcrumb.jsx';
 import MarkdownView from './components/MarkdownView.jsx';
 import Landing from './components/Landing.jsx';
+import DropZone from './components/DropZone.jsx';
 
 const EXPAND_KEY = 'fok-expanded';
 
@@ -73,6 +74,7 @@ function Sidebar() {
           currentRoute={currentRoute}
         />
       </nav>
+      <div className="sidebar-hint">＋ Drag <code>.md</code> files here to import</div>
     </aside>
   );
 }
@@ -84,6 +86,7 @@ function Layout() {
       <main className="content">
         <Outlet />
       </main>
+      <DropZone />
     </div>
   );
 }
