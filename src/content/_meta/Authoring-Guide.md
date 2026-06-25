@@ -8,12 +8,12 @@ tags: [authoring, conventions, markdown, reference]
 
 ## How content works
 
-The folder `src/content/` **is** the navigation tree. Drop a `.md` file in, and
-it shows up in the sidebar — no manifest to edit. Nested folders become nested
-sidebar sections.
+Your notes are markdown files in a content folder. The folder structure **is**
+the navigation tree — nested folders become nested sidebar sections, no manifest
+to edit.
 
 ```
-src/content/
+content/
   REAPER/
     Shortcuts.md
     Workflows/
@@ -22,7 +22,22 @@ src/content/
     Worktrees.md
 ```
 
-In dev (`npm run dev`), saving a new file hot-reloads it live.
+### Adding notes
+
+**Drag and drop** — drop one or more `.md` files anywhere onto the window. They're
+saved into your library permanently and the new page opens automatically. The
+target folder comes from each file's `category` / `section` frontmatter (files
+without a `category` land under **Imported**).
+
+**Edit the folder directly** — or manage files yourself:
+
+- **Desktop app:** `%APPDATA%\Fountain of Knowledge\content`
+  (paste that path into File Explorer's address bar).
+- **Web / dev mode:** the project's `src/content/` folder; saving a file
+  hot-reloads it live.
+
+> [!note] The desktop app's content folder persists across app updates and
+> reinstalls, so your notes are safe.
 
 ## Frontmatter
 

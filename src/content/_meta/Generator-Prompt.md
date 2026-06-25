@@ -24,8 +24,12 @@ Topic: <TOPIC>
 
 ## Then
 
-1. Save the output into `src/content/<Category>/<Name>.md`.
-2. It appears in the sidebar automatically.
+1. Save Claude's output as a `.md` file (the name is up to you).
+2. **Drag it onto this window** — it's filed automatically by its `category` /
+   `section` frontmatter and the new page opens.
+
+That's it. (You can also drop it straight into the content folder — see the
+Authoring Guide for where that lives.)
 
 > [!tip] Use the `order` field if you want a specific file to sit at the top of
 > its group instead of alphabetical order.
