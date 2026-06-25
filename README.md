@@ -15,6 +15,22 @@ npm run host       # serve on your LAN (read it from a phone/tablet)
 npm run build      # bake a static snapshot into dist/
 ```
 
+## Desktop shortcut (Windows)
+
+Open the reader from your Desktop with one double-click — no terminal needed.
+
+1. Make sure [Node.js](https://nodejs.org) is installed.
+2. In the `scripts` folder, double-click **`install-shortcut.bat`** (once).
+   - This puts a **Fountain of Knowledge** icon on your Desktop.
+3. Double-click that Desktop icon any time to open the reader.
+
+The shortcut starts the local server automatically and opens the app in a
+clean, app-style window (Chrome or Edge; falls back to your default browser).
+On the very first launch it installs dependencies, so give it a moment.
+
+A small minimized **"Fountain of Knowledge (server)"** window stays open while
+you read — just close it when you're done to stop the server.
+
 ## Adding content
 
 The directory `src/content/` **is** the navigation tree. Drop a `.md` file in and

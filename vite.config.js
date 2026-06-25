@@ -12,6 +12,9 @@ export default defineConfig({
     // local-only reader, so the size warning isn't actionable.
     chunkSizeWarningLimit: 1024,
   },
+  // Fixed port so the desktop shortcut always targets the same URL.
+  server: { port: 5173, strictPort: true },
+  preview: { port: 4173, strictPort: true },
   resolve: {
     alias: {
       buffer: 'buffer',
