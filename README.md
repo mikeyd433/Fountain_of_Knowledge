@@ -4,38 +4,55 @@ A private, local-only, browsable reader for your program shortcuts, workflows,
 and reference notes. Content is authored as markdown, dropped into a folder, and
 rendered in a nested, searchable, cheat-sheet-aware interface.
 
-No deployment, no auth, no hosting — runs on your machine with `npm run dev`.
+No deployment, no auth, no hosting. Runs as a native desktop app, or as a
+local web app for LAN/phone access.
 
-## Quick start
+## Desktop app (Windows) — recommended
+
+Build a real, self-contained Windows app: its own `.exe`, Start-Menu and
+Desktop entries, no terminal, no localhost, no browser.
 
 ```bash
 npm install
+npm run app:build
+```
+
+This produces an installer at **`dist-app/Fountain of Knowledge Setup <version>.exe`**.
+Run it once to install; then launch **Fountain of Knowledge** like any other app.
+
+Your notes live in a writable folder that **persists across app updates**:
+`%APPDATA%\Fountain of Knowledge\content`. On first launch it's seeded with the
+sample content. Drag `.md` files onto the window to add more (see below).
+
+### Run the desktop app in development
+
+```bash
+npm run app:dev    # starts Vite + Electron with hot reload
+```
+
+## Web app (LAN / phone)
+
+Prefer a browser, or want to read it from your phone on the same network?
+
+```bash
 npm run dev        # open the printed localhost URL
 npm run host       # serve on your LAN (read it from a phone/tablet)
 npm run build      # bake a static snapshot into dist/
 ```
 
-## Desktop shortcut (Windows)
-
-Open the reader from your Desktop with one double-click — no terminal needed.
-
-1. Make sure [Node.js](https://nodejs.org) is installed.
-2. In the `scripts` folder, double-click **`install-shortcut.bat`** (once).
-   - This puts a **Fountain of Knowledge** icon on your Desktop.
-3. Double-click that Desktop icon any time to open the reader.
-
-The shortcut starts the local server automatically and opens the app in a
-clean, app-style window (Chrome or Edge; falls back to your default browser).
-On the very first launch it installs dependencies, so give it a moment.
-
-A small minimized **"Fountain of Knowledge (server)"** window stays open while
-you read — just close it when you're done to stop the server.
+There's also a one-click Windows launcher for this mode: double-click
+`scripts/install-shortcut.bat` once to put a Desktop shortcut that starts the
+local server and opens a clean app-style browser window.
 
 ## Adding content
 
-The directory `src/content/` **is** the navigation tree. Drop a `.md` file in and
-it appears in the sidebar automatically. In dev mode, saving a file hot-reloads
-it live.
+Drag `.md` files anywhere onto the window to import them — they're saved to your
+library permanently. You can also edit the content folder directly:
+
+- **Desktop app:** `%APPDATA%\Fountain of Knowledge\content`
+- **Web/dev:** `src/content/` (saving a file hot-reloads it live)
+
+The folder structure **is** the navigation tree.
 
 ```
 src/content/
@@ -75,5 +92,5 @@ itself, under **Authoring Kit** (`src/content/_meta/`).
 
 ## Stack
 
-React + Vite · react-router-dom · gray-matter · react-markdown + remark-gfm ·
-rehype-raw · shiki · fuse.js
+Electron · React + Vite · react-router-dom · gray-matter ·
+react-markdown + remark-gfm · rehype-raw · shiki · fuse.js

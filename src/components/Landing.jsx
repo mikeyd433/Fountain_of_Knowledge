@@ -1,8 +1,8 @@
 import { Link } from 'react-router-dom';
-import { categories, files } from '../lib/content.js';
+import { useLibrary } from '../lib/library.js';
 
 export default function Landing() {
-  const cats = categories();
+  const { categories: cats, files } = useLibrary();
 
   return (
     <div className="landing">

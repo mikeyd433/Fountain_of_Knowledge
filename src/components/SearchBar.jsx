@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { search } from '../lib/search.js';
+import { useLibrary } from '../lib/library.js';
 
 export default function SearchBar() {
+  const { search } = useLibrary();
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(0);
@@ -10,7 +11,7 @@ export default function SearchBar() {
   const boxRef = useRef(null);
   const navigate = useNavigate();
 
-  const results = useMemo(() => search(query), [query]);
+  const results = useMemo(() => search(query), [query, search]);
 
   // "/" focuses search from anywhere.
   useEffect(() => {

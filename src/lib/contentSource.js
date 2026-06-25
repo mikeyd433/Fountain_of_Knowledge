@@ -1,0 +1,61 @@
+// Where content comes from at runtime.
+//
+// - Desktop (Electron): read from the user's writable content folder via IPC,
+//   so notes persist across app updates.
+// - Web/dev: use the markdown bundled at build time via Vite's glob.
+
+const bundled = import.meta.glob('../content/**/*.md', {
+  query: '?raw',
+  import: 'default',
+  eager: true,
+});
+
+function bundledRaw() {
+  const out = {};
+  for (const [p, raw] of Object.entries(bundled)) {
+    const rel = p.replace(/^.*\/content\//, '');
+    out[rel] = raw;
+  }
+  return out;
+}
+
+export function isDesktop() {
+  return typeof window !== 'undefined' && !!window.fokAPI;
+}
+
+// Returns a { relPath: rawMarkdown } map.
+export async function loadRawFiles() {
+  if (isDesktop() && window.fokAPI.listContent) {
+    const list = await window.fokAPI.listContent(); // [{ relPath, raw }]
+    const out = {};
+    for (const f of list) out[f.relPath] = f.raw;
+    return out;
+  }
+  return bundledRaw();
+}
+
+// Persist imported files. Returns { ok, written, error }.
+export async function importFiles(payload) {
+  if (isDesktop() && window.fokAPI.importFiles) {
+    return window.fokAPI.importFiles(payload);
+  }
+  // Web/dev fallback: the Vite dev-server endpoint.
+  const res = await fetch('/__import', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ files: payload }),
+  });
+  const data = await res.json().catch(() => ({ ok: false, error: 'bad response' }));
+  if (!res.ok && data.ok === undefined) {
+    return { ok: false, error: 'HTTP ' + res.status };
+  }
+  return data;
+}
+
+// Open the content folder in the OS file manager (desktop only).
+export async function revealContentFolder() {
+  if (isDesktop() && window.fokAPI.revealContentFolder) {
+    return window.fokAPI.revealContentFolder();
+  }
+  return false;
+}

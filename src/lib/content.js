@@ -1,13 +1,5 @@
 import matter from 'gray-matter';
 
-// Load every markdown file under ./content as raw text at app start.
-// Dev: HMR picks up new files. Build: baked into a static snapshot.
-const rawFiles = import.meta.glob('../content/**/*.md', {
-  query: '?raw',
-  import: 'default',
-  eager: true,
-});
-
 function slug(s) {
   return String(s)
     .toLowerCase()
@@ -34,26 +26,26 @@ function extractHeadings(body) {
   return out;
 }
 
-// Parse one file into a normalized record.
-function parseFile(globPath, raw) {
+// Parse one file into a normalized record. `relPath` may be either a bare
+// content-relative path ("REAPER/Shortcuts.md") or a glob path
+// ("../content/REAPER/Shortcuts.md"); both are handled.
+function parseFile(relPath, raw) {
   const { data, content } = matter(raw);
 
-  // "../content/REAPER/Workflows/Routing.md" -> "REAPER/Workflows/Routing.md"
-  const rel = globPath.replace(/^.*\/content\//, '');
+  const rel = String(relPath).replace(/^.*\/content\//, '').replace(/^\/+/, '');
   const parts = rel.split('/');
   const fileName = parts.pop().replace(/\.md$/i, '');
-  const folders = parts; // intermediate folders
+  const folders = parts;
 
   const title = data.title || fileName;
   const category = data.category || folders[0] || 'General';
-  // section / deeper folders feed the nesting beneath the category
   const subFolders = data.section ? [data.section] : folders.slice(1);
 
   const treePath = [category, ...subFolders];
   const route = '/' + [...treePath, title].map(slug).join('/');
 
   return {
-    globPath,
+    relPath: rel,
     route,
     title,
     category,
@@ -68,10 +60,6 @@ function parseFile(globPath, raw) {
   };
 }
 
-export const files = Object.entries(rawFiles)
-  .map(([p, raw]) => parseFile(p, raw))
-  .sort(byOrderThenTitle);
-
 function byOrderThenTitle(a, b) {
   const ao = a.order ?? Infinity;
   const bo = b.order ?? Infinity;
@@ -80,7 +68,7 @@ function byOrderThenTitle(a, b) {
 }
 
 // Build a nested tree: { name, path, folders:[], files:[] }
-export function buildTree(fileList) {
+function buildTree(fileList) {
   const root = { name: '', path: '', folders: new Map(), files: [] };
 
   for (const f of fileList) {
@@ -101,7 +89,6 @@ export function buildTree(fileList) {
     node.files.push(f);
   }
 
-  // Convert Maps -> sorted arrays.
   function finalize(node) {
     const folders = [...node.folders.values()]
       .sort((a, b) => a.name.localeCompare(b.name))
@@ -111,21 +98,6 @@ export function buildTree(fileList) {
   }
 
   return finalize(root);
-}
-
-export const tree = buildTree(files);
-
-export const fileByRoute = new Map(files.map((f) => [f.route, f]));
-
-// Top-level categories with counts, for the landing page.
-export function categories() {
-  return tree.folders.map((c) => ({
-    name: c.name,
-    path: c.path,
-    count: countFiles(c),
-    firstRoute: firstLeafRoute(c),
-    icon: firstIcon(c),
-  }));
 }
 
 function countFiles(node) {
@@ -151,10 +123,29 @@ function firstIcon(node) {
   return null;
 }
 
-export const firstRoute = files.length ? files[0].route : null;
+function topCategories(tree) {
+  return tree.folders.map((c) => ({
+    name: c.name,
+    path: c.path,
+    count: countFiles(c),
+    firstRoute: firstLeafRoute(c),
+    icon: firstIcon(c),
+  }));
+}
 
-// Compute the route a dropped file will have once written, using the exact
-// same derivation as the loader so we can navigate straight to it.
+// Assemble a full library from a { relPath: rawMarkdown } map.
+export function buildLibrary(rawMap) {
+  const files = Object.entries(rawMap)
+    .map(([p, raw]) => parseFile(p, raw))
+    .sort(byOrderThenTitle);
+  const tree = buildTree(files);
+  const fileByRoute = new Map(files.map((f) => [f.route, f]));
+  const categories = topCategories(tree);
+  const firstRoute = files.length ? files[0].route : null;
+  return { files, tree, fileByRoute, categories, firstRoute };
+}
+
+// Route a dropped file will get once written — same derivation as the loader.
 export function routeForDropped(relPath, raw) {
-  return parseFile('../content/' + relPath, raw).route;
+  return parseFile(relPath, raw).route;
 }

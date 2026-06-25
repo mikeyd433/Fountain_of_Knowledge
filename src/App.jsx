@@ -1,12 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
-import {
-  Link,
-  Outlet,
-  Route,
-  Routes,
-  useLocation,
-} from 'react-router-dom';
-import { files, tree } from './lib/content.js';
+import { Link, Outlet, Route, Routes, useLocation } from 'react-router-dom';
+import { buildLibrary } from './lib/content.js';
+import { loadRawFiles } from './lib/contentSource.js';
+import { createSearch } from './lib/search.js';
+import { LibraryContext, useLibrary } from './lib/library.js';
 import TreeNode from './components/TreeNode.jsx';
 import SearchBar from './components/SearchBar.jsx';
 import ThemeToggle from './components/ThemeToggle.jsx';
@@ -17,7 +14,6 @@ import DropZone from './components/DropZone.jsx';
 
 const EXPAND_KEY = 'fok-expanded';
 
-// Collect every folder path, used to default-expand the tree on first run.
 function allFolderPaths(node, acc = []) {
   for (const f of node.folders) {
     acc.push(f.path);
@@ -26,19 +22,17 @@ function allFolderPaths(node, acc = []) {
   return acc;
 }
 
-function loadExpanded() {
-  try {
-    const raw = localStorage.getItem(EXPAND_KEY);
-    if (raw) return new Set(JSON.parse(raw));
-  } catch (e) {}
-  return new Set(allFolderPaths(tree));
-}
-
 function Sidebar() {
+  const { tree } = useLibrary();
   const location = useLocation();
   const currentRoute = decodeURIComponent(location.pathname);
-  const [expanded, setExpanded] = useState(loadExpanded);
-  const [collapsed, setCollapsed] = useState(false);
+  const [expanded, setExpanded] = useState(() => {
+    try {
+      const raw = localStorage.getItem(EXPAND_KEY);
+      if (raw) return new Set(JSON.parse(raw));
+    } catch (e) {}
+    return new Set(allFolderPaths(tree));
+  });
 
   useEffect(() => {
     try {
@@ -56,7 +50,7 @@ function Sidebar() {
   }, []);
 
   return (
-    <aside className={`sidebar${collapsed ? ' collapsed' : ''}`}>
+    <aside className="sidebar">
       <div className="sidebar-top">
         <Link to="/" className="brand">
           <span className="brand-mark">⛲</span>
@@ -135,20 +129,52 @@ function NotFound() {
   );
 }
 
-export default function App() {
+function Splash({ children }) {
   return (
-    <Routes>
-      <Route element={<Layout />}>
-        <Route index element={<Landing />} />
-        {files.map((f) => (
-          <Route
-            key={f.route}
-            path={f.route.slice(1)}
-            element={<FileView file={f} />}
-          />
-        ))}
-        <Route path="*" element={<NotFound />} />
-      </Route>
-    </Routes>
+    <div className="splash">
+      <div className="splash-mark">⛲</div>
+      <div className="splash-text">{children}</div>
+    </div>
+  );
+}
+
+export default function App() {
+  const [lib, setLib] = useState(null);
+  const [error, setError] = useState(null);
+
+  const reload = useCallback(() => {
+    setError(null);
+    loadRawFiles()
+      .then((rawMap) => {
+        const built = buildLibrary(rawMap);
+        built.search = createSearch(built.files);
+        setLib(built);
+      })
+      .catch((e) => setError(String(e?.message || e)));
+  }, []);
+
+  useEffect(() => {
+    reload();
+  }, [reload]);
+
+  if (error) return <Splash>Couldn’t load your library: {error}</Splash>;
+  if (!lib) return <Splash>Loading your library…</Splash>;
+
+  return (
+    <LibraryContext.Provider value={{ ...lib, reload }}>
+      <Routes>
+        <Route element={<Layout />}>
+          <Route index element={<Landing />} />
+          {lib.files.map((f) => (
+            <Route
+              key={f.route}
+              path={f.route.slice(1)}
+              element={<FileView file={f} />}
+            />
+          ))}
+          <Route path="*" element={<NotFound />} />
+        </Route>
+      </Routes>
+    </LibraryContext.Provider>
   );
 }

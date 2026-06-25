@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import matter from 'gray-matter';
 import { routeForDropped } from '../lib/content.js';
+import { importFiles as persistFiles } from '../lib/contentSource.js';
 
 // Strip characters that are illegal in Windows paths/filenames.
 function cleanSeg(s) {
@@ -103,18 +104,13 @@ export default function DropZone() {
         }
       }
 
-      const res = await fetch('/__import', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ files: payload }),
-      });
-      const data = await res.json().catch(() => ({ ok: false, error: 'bad response' }));
-      if (!res.ok || !data.ok) throw new Error(data.error || 'HTTP ' + res.status);
+      const data = await persistFiles(payload);
+      if (!data || !data.ok) throw new Error((data && data.error) || 'import failed');
 
       const n = data.written.length;
       setToast({ type: 'ok', msg: `Imported ${n} file${n > 1 ? 's' : ''}. Refreshing…` });
       if (firstRoute) window.location.hash = '#' + firstRoute;
-      // Full reload so the Vite content glob picks up the new file(s).
+      // Full reload so the library re-reads and picks up the new file(s).
       setTimeout(() => window.location.reload(), 800);
     } catch (e) {
       const networkish = /Failed to fetch|NetworkError|bad response/i.test(String(e));

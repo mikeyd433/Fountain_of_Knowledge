@@ -3,12 +3,16 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
+  "main": "electron/main.cjs",
   "description": "A private, browsable, cheat-sheet-aware reader for personal reference notes.",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "host": "vite --host"
+    "host": "vite --host",
+    "app:dev": "concurrently -k -n vite,electron \"vite\" \"wait-on tcp:127.0.0.1:5173 && electron .\"",
+    "app:start": "electron .",
+    "app:build": "vite build && electron-builder"
   },
   "dependencies": {
     "buffer": "^6.0.3",
@@ -24,6 +28,40 @@
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.2",
-    "vite": "^5.4.8"
+    "concurrently": "^9.0.1",
+    "electron": "^33.2.0",
+    "electron-builder": "^25.1.8",
+    "vite": "^5.4.8",
+    "wait-on": "^8.0.1"
+  },
+  "build": {
+    "appId": "com.mike.fountainofknowledge",
+    "productName": "Fountain of Knowledge",
+    "directories": {
+      "output": "dist-app",
+      "buildResources": "scripts"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "src/content",
+        "to": "defaultContent"
+      }
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "scripts/fountain.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Fountain of Knowledge"
+    }
   }
 }

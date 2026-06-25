@@ -65,6 +65,8 @@ function contentImporter() {
 }
 
 export default defineConfig({
+  // Relative asset paths so the built app also works from file:// inside Electron.
+  base: './',
   plugins: [react(), contentImporter()],
   define: {
     global: 'globalThis',
