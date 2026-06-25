@@ -28,6 +28,58 @@ function deriveRelPath(fileName, raw) {
   return [category, section, name].filter(Boolean).join('/');
 }
 
+// A "bundle" is one file that defines several pages. Marked with `bundle: true`
+// in frontmatter; each top-level `# Heading` becomes its own page, inheriting
+// category/section/icon/tags from the file's frontmatter.
+function expandBundle(raw) {
+  let parsed;
+  try {
+    parsed = matter(raw);
+  } catch {
+    return null;
+  }
+  const fm = parsed.data || {};
+  const isBundle = fm.bundle === true || fm.split === 'h1' || fm.multipage === true;
+  if (!isBundle) return null;
+
+  const lines = parsed.content.split('\n');
+  const pages = [];
+  let cur = null;
+  let inFence = false;
+  for (const line of lines) {
+    if (/^\s*```/.test(line)) inFence = !inFence;
+    const m = !inFence && /^#\s+(.+?)\s*$/.exec(line); // single-# H1 only
+    if (m) {
+      if (cur) pages.push(cur);
+      cur = { title: m[1].replace(/[#*`]/g, '').trim(), body: [] };
+    } else if (cur) {
+      cur.body.push(line);
+    }
+    // Any text before the first H1 is ignored.
+  }
+  if (cur) pages.push(cur);
+  if (pages.length === 0) return null;
+
+  const baseOrder = typeof fm.order === 'number' ? fm.order : 0;
+  return pages.map((pg, i) => {
+    const pageFm = { title: pg.title };
+    if (fm.category) pageFm.category = fm.category;
+    if (fm.section) pageFm.section = fm.section;
+    if (fm.icon) pageFm.icon = fm.icon;
+    if (Array.isArray(fm.tags)) pageFm.tags = fm.tags;
+    pageFm.order = baseOrder + i + 1;
+    const content = matter.stringify(pg.body.join('\n').trim() + '\n', pageFm);
+    return { relPath: deriveRelPath(pg.title + '.md', content), content };
+  });
+}
+
+// Turn one dropped file into one or more page entries (expanding bundles).
+function fileToEntries(name, raw) {
+  const expanded = expandBundle(raw);
+  if (expanded && expanded.length) return expanded;
+  return [{ relPath: deriveRelPath(name, raw), content: raw }];
+}
+
 function dragHasFiles(e) {
   return Array.from(e.dataTransfer?.types || []).includes('Files');
 }
@@ -135,13 +187,14 @@ export default function DropZone() {
       let firstRoute = null;
       for (const f of droppedFiles) {
         const raw = await f.text();
-        const relPath = deriveRelPath(f.name, raw);
-        payload.push({ relPath, content: raw });
-        if (!firstRoute) {
-          try {
-            firstRoute = routeForDropped(relPath, raw);
-          } catch {
-            /* ignore route derivation issues */
+        for (const entry of fileToEntries(f.name, raw)) {
+          payload.push(entry);
+          if (!firstRoute) {
+            try {
+              firstRoute = routeForDropped(entry.relPath, entry.content);
+            } catch {
+              /* ignore route derivation issues */
+            }
           }
         }
       }
@@ -178,7 +231,7 @@ export default function DropZone() {
       const payload = [];
       for (const f of fileObjs) {
         const raw = await f.text();
-        payload.push({ relPath: deriveRelPath(f.name, raw), content: raw });
+        payload.push(...fileToEntries(f.name, raw));
       }
 
       // Estimate how many existing pages would be removed (excludes _meta).

@@ -33,3 +33,17 @@ Authoring Guide for where that lives.)
 
 > [!tip] Use the `order` field if you want a specific file to sit at the top of
 > its group instead of alphabetical order.
+
+## Want a whole section in one file?
+
+Ask for a **bundle** and you'll get several pages from a single file:
+
+````text
+Make it a single bundle file: add `bundle: true` to the frontmatter and start
+each page with a `# Page Title` heading (use `## ` for sub-sections within a
+page). All pages share the same category/section/icon/tags.
+Topic: <TOPIC>  Pages: <PAGE 1>, <PAGE 2>, <PAGE 3>
+````
+
+Drop that one file and it expands into all those pages. See **Multi-page files**
+in the Authoring Guide for details.

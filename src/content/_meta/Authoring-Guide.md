@@ -70,6 +70,44 @@ tags: [routing, sends, busses] # optional — feeds search
 ---
 ```
 
+## Multi-page files (bundles)
+
+Want several pages in a section but only want to manage **one** file? Add
+`bundle: true` to the frontmatter. Then every top-level `# Heading` becomes its
+own page, and they all share the file's `category` / `section` / `icon` / `tags`.
+
+```markdown
+---
+category: REAPER
+section: Workflows
+bundle: true
+icon: 🎛️
+tags: [reaper]
+---
+
+# Routing
+
+## Sends
+Use `Ctrl+Alt+S` to add a send.
+
+# Recording
+
+## Arming tracks
+Press `R` to arm.
+
+# Comping
+
+Take lanes and how to flatten them.
+```
+
+That single file produces three pages — **Routing**, **Recording**, **Comping** —
+all under REAPER › Workflows, in the order written. Inside each page, use `##`
+for its sub-sections as usual.
+
+> [!tip] Drop the bundle file like any other. Re-dropping an edited version
+> overwrites the same pages (the titles drive where they land), so it stays in
+> sync — no duplicates.
+
 ## Conventions
 
 ### Keycaps
