@@ -232,6 +232,43 @@ a:hover {
   margin: 0;
   padding: 0;
 }
+.tree-row {
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+.tree-row > .tree-folder-btn,
+.tree-row > .tree-file-link {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.tree-folder-name,
+.tree-file-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tree-del {
+  flex: 0 0 auto;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  opacity: 0;
+  font-size: 12px;
+  line-height: 1;
+  padding: 4px 8px;
+  margin-right: 2px;
+  border-radius: 6px;
+  color: var(--text-faint);
+}
+.tree-row:hover .tree-del {
+  opacity: 0.6;
+}
+.tree-del:hover {
+  opacity: 1;
+  background: var(--accent-soft);
+  color: #d9534f;
+}
 .tree-folder-btn {
   display: flex;
   align-items: center;
@@ -251,7 +288,7 @@ a:hover {
   background: var(--accent-soft);
   color: var(--text);
 }
-.tree-folder-btn.has-current {
+.tree-row.has-current .tree-folder-btn {
   color: var(--text);
 }
 .tree-caret {

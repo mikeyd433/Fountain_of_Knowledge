@@ -70,6 +70,19 @@ export async function syncLibrary(files, opts = {}) {
   return res.json().catch(() => ({ ok: false, error: 'bad response' }));
 }
 
+// Delete specific files by relPath (e.g. a whole branch). Returns { ok, deleted }.
+export async function deleteFiles(paths) {
+  if (isDesktop() && window.fokAPI.deleteFiles) {
+    return window.fokAPI.deleteFiles(paths);
+  }
+  const res = await fetch('/__delete', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ paths }),
+  });
+  return res.json().catch(() => ({ ok: false, error: 'bad response' }));
+}
+
 // Export (download / save) a markdown file. Returns { ok, canceled?, error? }.
 export async function exportFile(name, content) {
   if (isDesktop() && window.fokAPI.exportFile) {

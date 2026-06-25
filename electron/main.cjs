@@ -156,6 +156,37 @@ function importFiles(files) {
   }
 }
 
+// Delete specific .md files (e.g. a whole branch of the tree).
+function deleteFiles(paths) {
+  if (!Array.isArray(paths) || paths.length === 0) {
+    return { ok: false, error: 'no paths' };
+  }
+  const deleted = [];
+  try {
+    for (const rel0 of paths) {
+      const rel = String(rel0 || '').replace(/\\/g, '/');
+      const segs = rel
+        .split('/')
+        .map((s) => s.trim())
+        .filter((s) => s && s !== '.' && s !== '..');
+      if (segs.length === 0) continue;
+      const target = path.resolve(contentDir, segs.join('/'));
+      if (target === contentDir || !target.startsWith(contentDir + path.sep)) continue;
+      if (!target.toLowerCase().endsWith('.md')) continue;
+      try {
+        fs.rmSync(target);
+        deleted.push(segs.join('/'));
+      } catch {
+        /* ignore */
+      }
+    }
+    removeEmptyDirs(contentDir);
+    return { ok: true, deleted };
+  } catch (e) {
+    return { ok: false, error: String((e && e.message) || e) };
+  }
+}
+
 // Mirror: write all given files, then delete any existing .md not in the set
 // (except preserved prefixes such as _meta). Merge: just write.
 function syncLibrary({ files, mode, preserve }) {
@@ -222,6 +253,7 @@ function createWindow() {
 ipcMain.handle('content:list', () => listContent());
 ipcMain.handle('content:import', (_e, files) => importFiles(files));
 ipcMain.handle('content:sync', (_e, body) => syncLibrary(body));
+ipcMain.handle('content:delete', (_e, paths) => deleteFiles(paths));
 ipcMain.handle('content:reveal', () => {
   shell.openPath(contentDir);
   return true;

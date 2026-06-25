@@ -55,6 +55,16 @@ Every page has two buttons under its title:
 
 So the round-trip is: **Export → edit with Claude → Replace.**
 
+### Deleting
+
+Hover any item in the sidebar and click the 🗑 icon:
+
+- on a **category or section** — removes that whole branch and every page in it,
+- on a single **page** — removes just that page.
+
+You'll be asked to confirm first. This is handy for clearing out a section so you
+can re-import it totally fresh.
+
 ## Frontmatter
 
 Every file starts with YAML frontmatter. Only `title` is required.

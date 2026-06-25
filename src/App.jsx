@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, Outlet, Route, Routes, useLocation } from 'react-router-dom';
 import { buildLibrary } from './lib/content.js';
-import { loadRawFiles } from './lib/contentSource.js';
+import { loadRawFiles, deleteFiles } from './lib/contentSource.js';
 import { createSearch } from './lib/search.js';
 import { LibraryContext, useLibrary } from './lib/library.js';
 import TreeNode from './components/TreeNode.jsx';
@@ -67,6 +67,23 @@ function Sidebar() {
     });
   }, []);
 
+  // Delete a branch (folder) or a single page, then refresh.
+  const onDelete = useCallback(async (paths, label, count) => {
+    if (!paths || paths.length === 0) return;
+    const ok = window.confirm(
+      `Delete "${label}"${count > 1 ? ` and its ${count} pages` : ''}?\n\n` +
+        `This permanently removes the file(s) and can't be undone.`
+    );
+    if (!ok) return;
+    const res = await deleteFiles(paths);
+    if (!res || !res.ok) {
+      window.alert('Delete failed: ' + ((res && res.error) || 'unknown error'));
+      return;
+    }
+    window.location.hash = '#/';
+    window.location.reload();
+  }, []);
+
   return (
     <aside className="sidebar">
       <div className="sidebar-top">
@@ -84,6 +101,7 @@ function Sidebar() {
           expanded={expanded}
           toggle={toggle}
           currentRoute={currentRoute}
+          onDelete={onDelete}
         />
       </nav>
       <div className="sidebar-hint">

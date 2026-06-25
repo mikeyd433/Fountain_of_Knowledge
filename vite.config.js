@@ -67,6 +67,30 @@ function makeContentOps(contentRoot) {
     return { ok: true, written: files.map(writeOne) };
   }
 
+  function deleteFiles(paths) {
+    if (!Array.isArray(paths) || paths.length === 0) throw new Error('no paths');
+    const deleted = [];
+    for (const rel0 of paths) {
+      const rel = String(rel0 || '').replace(/\\/g, '/');
+      const segs = rel
+        .split('/')
+        .map((s) => s.trim())
+        .filter((s) => s && s !== '.' && s !== '..');
+      if (segs.length === 0) continue;
+      const target = path.resolve(contentRoot, segs.join('/'));
+      if (target === contentRoot || !target.startsWith(contentRoot + path.sep)) continue;
+      if (!target.toLowerCase().endsWith('.md')) continue;
+      try {
+        fs.rmSync(target);
+        deleted.push(segs.join('/'));
+      } catch {
+        /* ignore */
+      }
+    }
+    removeEmptyDirs(contentRoot);
+    return { ok: true, deleted };
+  }
+
   function syncLibrary({ files, mode, preserve }) {
     if (!Array.isArray(files)) throw new Error('no files');
     const written = files.map(writeOne);
@@ -91,7 +115,7 @@ function makeContentOps(contentRoot) {
     return { ok: true, written, deleted };
   }
 
-  return { importFiles, syncLibrary };
+  return { importFiles, syncLibrary, deleteFiles };
 }
 
 function contentImporter() {
@@ -127,6 +151,7 @@ function contentImporter() {
     configureServer(server) {
       jsonPost(server, '/__import', (data) => ops.importFiles(data.files));
       jsonPost(server, '/__sync', (data) => ops.syncLibrary(data));
+      jsonPost(server, '/__delete', (data) => ops.deleteFiles(data.paths));
     },
   };
 }
