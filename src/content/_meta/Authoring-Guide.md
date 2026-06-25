@@ -24,10 +24,15 @@ content/
 
 ### Adding notes
 
-**Drag and drop** — drop one or more `.md` files anywhere onto the window. They're
-saved into your library permanently and the new page opens automatically. The
-target folder comes from each file's `category` / `section` frontmatter (files
+**Drag and drop files** — drop one or more `.md` files anywhere onto the window.
+They're saved into your library permanently and the new page opens automatically.
+The target folder comes from each file's `category` / `section` frontmatter (files
 without a `category` land under **Imported**).
+
+**Drag and drop a folder** — drop a whole folder to **mirror** your library to it:
+matching pages are updated, new ones added, and pages *not* in the folder are
+removed. You'll be asked to confirm first, and the Authoring Kit is always kept.
+Use this when the folder is your single source of truth.
 
 **Edit the folder directly** — or manage files yourself:
 

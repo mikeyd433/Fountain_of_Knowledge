@@ -93,31 +93,94 @@ function listContent() {
 }
 
 // Write imported files, guarding against escaping the content folder.
+function writeOne(f) {
+  const rel = String(f.relPath || '').replace(/\\/g, '/');
+  const segs = rel
+    .split('/')
+    .map((s) => s.trim())
+    .filter((s) => s && s !== '.' && s !== '..');
+  if (segs.length === 0) throw new Error('bad path');
+  const dest = path.resolve(contentDir, segs.join('/'));
+  if (dest !== contentDir && !dest.startsWith(contentDir + path.sep)) {
+    throw new Error('path outside content folder');
+  }
+  if (!dest.toLowerCase().endsWith('.md')) {
+    throw new Error('only .md files are allowed');
+  }
+  fs.mkdirSync(path.dirname(dest), { recursive: true });
+  fs.writeFileSync(dest, String(f.content ?? ''), 'utf8');
+  return path.relative(contentDir, dest).replace(/\\/g, '/');
+}
+
+function listAllMd() {
+  const out = [];
+  (function walk(dir, rel) {
+    let entries = [];
+    try {
+      entries = fs.readdirSync(dir, { withFileTypes: true });
+    } catch {
+      return;
+    }
+    for (const e of entries) {
+      const abs = path.join(dir, e.name);
+      const r = rel ? rel + '/' + e.name : e.name;
+      if (e.isDirectory()) walk(abs, r);
+      else if (/\.md$/i.test(e.name)) out.push(r);
+    }
+  })(contentDir, '');
+  return out;
+}
+
+function removeEmptyDirs(dir) {
+  for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+    if (e.isDirectory()) {
+      const d = path.join(dir, e.name);
+      removeEmptyDirs(d);
+      try {
+        if (fs.readdirSync(d).length === 0) fs.rmdirSync(d);
+      } catch {
+        /* ignore */
+      }
+    }
+  }
+}
+
 function importFiles(files) {
   if (!Array.isArray(files) || files.length === 0) {
     return { ok: false, error: 'no files' };
   }
-  const written = [];
   try {
-    for (const f of files) {
-      const rel = String(f.relPath || '').replace(/\\/g, '/');
-      const segs = rel
-        .split('/')
-        .map((s) => s.trim())
-        .filter((s) => s && s !== '.' && s !== '..');
-      if (segs.length === 0) throw new Error('bad path');
-      const dest = path.resolve(contentDir, segs.join('/'));
-      if (dest !== contentDir && !dest.startsWith(contentDir + path.sep)) {
-        throw new Error('path outside content folder');
+    return { ok: true, written: files.map(writeOne) };
+  } catch (e) {
+    return { ok: false, error: String((e && e.message) || e) };
+  }
+}
+
+// Mirror: write all given files, then delete any existing .md not in the set
+// (except preserved prefixes such as _meta). Merge: just write.
+function syncLibrary({ files, mode, preserve }) {
+  if (!Array.isArray(files)) return { ok: false, error: 'no files' };
+  try {
+    const written = files.map(writeOne);
+    const writtenSet = new Set(written);
+    const deleted = [];
+    if (mode === 'mirror') {
+      const prefixes = (preserve || []).map(
+        (p) => String(p).replace(/\\/g, '/').replace(/\/+$/, '') + '/'
+      );
+      for (const rel of listAllMd()) {
+        if (writtenSet.has(rel)) continue;
+        if (prefixes.some((pre) => rel.startsWith(pre))) continue;
+        try {
+          fs.rmSync(path.join(contentDir, rel));
+          deleted.push(rel);
+        } catch {
+          /* ignore */
+        }
       }
-      if (!dest.toLowerCase().endsWith('.md')) {
-        throw new Error('only .md files are allowed');
-      }
-      fs.mkdirSync(path.dirname(dest), { recursive: true });
-      fs.writeFileSync(dest, String(f.content ?? ''), 'utf8');
-      written.push(path.relative(contentDir, dest).replace(/\\/g, '/'));
+      removeEmptyDirs(contentDir);
     }
-    return { ok: true, written };
+    return { ok: true, written, deleted };
   } catch (e) {
     return { ok: false, error: String((e && e.message) || e) };
   }
@@ -158,6 +221,7 @@ function createWindow() {
 
 ipcMain.handle('content:list', () => listContent());
 ipcMain.handle('content:import', (_e, files) => importFiles(files));
+ipcMain.handle('content:sync', (_e, body) => syncLibrary(body));
 ipcMain.handle('content:reveal', () => {
   shell.openPath(contentDir);
   return true;

@@ -69,7 +69,9 @@ function Sidebar() {
           currentRoute={currentRoute}
         />
       </nav>
-      <div className="sidebar-hint">＋ Drag <code>.md</code> files here to import</div>
+      <div className="sidebar-hint">
+        ＋ Drag <code>.md</code> files to add · a folder to replace all
+      </div>
     </aside>
   );
 }

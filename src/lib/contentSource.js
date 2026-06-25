@@ -52,6 +52,24 @@ export async function importFiles(payload) {
   return data;
 }
 
+// Mirror/merge the library from a batch of files. Returns { ok, written, deleted }.
+export async function syncLibrary(files, opts = {}) {
+  const body = {
+    files,
+    mode: opts.mode || 'mirror',
+    preserve: opts.preserve || ['_meta'],
+  };
+  if (isDesktop() && window.fokAPI.syncLibrary) {
+    return window.fokAPI.syncLibrary(body);
+  }
+  const res = await fetch('/__sync', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  return res.json().catch(() => ({ ok: false, error: 'bad response' }));
+}
+
 // Export (download / save) a markdown file. Returns { ok, canceled?, error? }.
 export async function exportFile(name, content) {
   if (isDesktop() && window.fokAPI.exportFile) {

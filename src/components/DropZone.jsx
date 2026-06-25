@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import matter from 'gray-matter';
 import { routeForDropped } from '../lib/content.js';
-import { importFiles as persistFiles } from '../lib/contentSource.js';
+import { importFiles as persistFiles, syncLibrary } from '../lib/contentSource.js';
+import { useLibrary } from '../lib/library.js';
 
 // Strip characters that are illegal in Windows paths/filenames.
 function cleanSeg(s) {
@@ -31,10 +32,33 @@ function dragHasFiles(e) {
   return Array.from(e.dataTransfer?.types || []).includes('Files');
 }
 
+// Recursively collect all .md File objects from a dropped filesystem entry.
+async function collectEntry(entry, out) {
+  if (!entry) return;
+  if (entry.isFile) {
+    if (/\.(md|markdown)$/i.test(entry.name)) {
+      const file = await new Promise((res, rej) => entry.file(res, rej));
+      out.push(file);
+    }
+  } else if (entry.isDirectory) {
+    const reader = entry.createReader();
+    // readEntries returns results in batches; call until it returns none.
+    let batch;
+    do {
+      batch = await new Promise((res, rej) => reader.readEntries(res, rej));
+      for (const e of batch) await collectEntry(e, out);
+    } while (batch.length > 0);
+  }
+}
+
 export default function DropZone() {
+  const { files: currentFiles } = useLibrary();
   const [dragging, setDragging] = useState(false);
   const [toast, setToast] = useState(null);
   const depth = useRef(0);
+  // Keep the latest file list reachable from the (stable) drop handler.
+  const filesRef = useRef(currentFiles);
+  filesRef.current = currentFiles;
 
   useEffect(() => {
     if (!toast) return;
@@ -65,6 +89,24 @@ export default function DropZone() {
       e.preventDefault();
       depth.current = 0;
       setDragging(false);
+
+      // Capture filesystem entries synchronously (the dataTransfer is cleared
+      // once this handler returns) to detect a folder drop.
+      const entries = [];
+      const items = e.dataTransfer.items;
+      if (items) {
+        for (const it of items) {
+          const en = it.webkitGetAsEntry && it.webkitGetAsEntry();
+          if (en) entries.push(en);
+        }
+      }
+      const hasDir = entries.some((en) => en && en.isDirectory);
+
+      if (hasDir) {
+        await mirrorFromEntries(entries);
+        return;
+      }
+
       const dropped = Array.from(e.dataTransfer.files).filter((f) =>
         /\.(md|markdown)$/i.test(f.name)
       );
@@ -123,15 +165,63 @@ export default function DropZone() {
     }
   }
 
+  // Folder drop → mirror the whole library to match the folder's .md files.
+  async function mirrorFromEntries(entries) {
+    try {
+      const fileObjs = [];
+      for (const en of entries) await collectEntry(en, fileObjs);
+      if (fileObjs.length === 0) {
+        setToast({ type: 'err', msg: 'No .md files found in that folder.' });
+        return;
+      }
+
+      const payload = [];
+      for (const f of fileObjs) {
+        const raw = await f.text();
+        payload.push({ relPath: deriveRelPath(f.name, raw), content: raw });
+      }
+
+      // Estimate how many existing pages would be removed (excludes _meta).
+      const keep = new Set(payload.map((p) => p.relPath));
+      const removing = filesRef.current.filter(
+        (f) => !f.relPath.startsWith('_meta/') && !keep.has(f.relPath)
+      ).length;
+
+      const ok = window.confirm(
+        `Replace your library with the ${payload.length} page(s) in this folder?\n\n` +
+          `• ${payload.length} page(s) will be added or updated\n` +
+          `• ${removing} existing page(s) not in the folder will be removed\n` +
+          `• The built-in Authoring Kit is kept\n\n` +
+          `This can't be undone.`
+      );
+      if (!ok) return;
+
+      setToast({ type: 'ok', msg: `Replacing library with ${payload.length} page(s)…` });
+      const data = await syncLibrary(payload, { mode: 'mirror', preserve: ['_meta'] });
+      if (!data || !data.ok) throw new Error((data && data.error) || 'mirror failed');
+
+      let firstRoute = null;
+      try {
+        firstRoute = routeForDropped(payload[0].relPath, payload[0].content);
+      } catch {
+        /* ignore */
+      }
+      window.location.hash = firstRoute ? '#' + firstRoute : '#/';
+      setTimeout(() => window.location.reload(), 800);
+    } catch (e) {
+      setToast({ type: 'err', msg: 'Replace failed: ' + (e.message || e) });
+    }
+  }
+
   return (
     <>
       {dragging && (
         <div className="dropzone-overlay">
           <div className="dropzone-card">
             <div className="dropzone-icon">📥</div>
-            <div className="dropzone-title">Drop markdown to import</div>
+            <div className="dropzone-title">Drop markdown</div>
             <div className="dropzone-sub">
-              Added to your library — or drop on a page’s Replace box to update it
+              Files are added to your library · a whole folder replaces it
             </div>
           </div>
         </div>
