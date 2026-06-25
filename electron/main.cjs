@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, shell, protocol, net } = require('electron');
+const { app, BrowserWindow, ipcMain, shell, protocol, net, dialog } = require('electron');
 const path = require('node:path');
 const fs = require('node:fs');
 const { pathToFileURL } = require('node:url');
@@ -161,6 +161,19 @@ ipcMain.handle('content:import', (_e, files) => importFiles(files));
 ipcMain.handle('content:reveal', () => {
   shell.openPath(contentDir);
   return true;
+});
+ipcMain.handle('content:export', async (_e, { name, content }) => {
+  try {
+    const { canceled, filePath } = await dialog.showSaveDialog({
+      defaultPath: name || 'note.md',
+      filters: [{ name: 'Markdown', extensions: ['md'] }],
+    });
+    if (canceled || !filePath) return { ok: false, canceled: true };
+    fs.writeFileSync(filePath, String(content ?? ''), 'utf8');
+    return { ok: true, path: filePath };
+  } catch (e) {
+    return { ok: false, error: String((e && e.message) || e) };
+  }
 });
 
 app.whenReady().then(() => {

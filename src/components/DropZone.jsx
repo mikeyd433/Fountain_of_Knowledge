@@ -130,7 +130,9 @@ export default function DropZone() {
           <div className="dropzone-card">
             <div className="dropzone-icon">📥</div>
             <div className="dropzone-title">Drop markdown to import</div>
-            <div className="dropzone-sub">.md files are added to your library</div>
+            <div className="dropzone-sub">
+              Added to your library — or drop on a page’s Replace box to update it
+            </div>
           </div>
         </div>
       )}

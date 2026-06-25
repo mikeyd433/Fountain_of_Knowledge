@@ -656,6 +656,55 @@ html.dark .shiki span {
 }
 
 /* ============================================================
+   Per-page actions (export / replace)
+   ============================================================ */
+.section-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+.sec-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: inherit;
+  color: var(--text-dim);
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 11px;
+  cursor: pointer;
+  user-select: none;
+  transition: border-color 0.12s, color 0.12s, background 0.12s;
+}
+.sec-btn:hover {
+  color: var(--text);
+  border-color: var(--accent);
+}
+.sec-drop.over {
+  border-color: var(--accent);
+  border-style: dashed;
+  background: var(--accent-soft, rgba(47, 109, 246, 0.18));
+  color: var(--text);
+  position: relative;
+  z-index: 250; /* sit above the import overlay while dragging */
+}
+.sec-toast {
+  font-size: 12px;
+  font-weight: 600;
+}
+.sec-toast.sec-ok {
+  color: #1a8f5a;
+}
+.sec-toast.sec-err {
+  color: #c4453f;
+}
+
+/* ============================================================
    Splash (loading / error)
    ============================================================ */
 .splash {
@@ -699,8 +748,8 @@ html.dark .shiki span {
   position: fixed;
   inset: 0;
   z-index: 200;
-  background: rgba(8, 11, 15, 0.72);
-  backdrop-filter: blur(2px);
+  background: rgba(8, 11, 15, 0.5);
+  backdrop-filter: blur(1px);
   display: flex;
   align-items: center;
   justify-content: center;

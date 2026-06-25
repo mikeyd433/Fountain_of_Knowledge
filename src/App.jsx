@@ -11,6 +11,7 @@ import Breadcrumb from './components/Breadcrumb.jsx';
 import MarkdownView from './components/MarkdownView.jsx';
 import Landing from './components/Landing.jsx';
 import DropZone from './components/DropZone.jsx';
+import SectionActions from './components/SectionActions.jsx';
 
 const EXPAND_KEY = 'fok-expanded';
 
@@ -111,6 +112,7 @@ function FileView({ file }) {
             ))}
           </div>
         )}
+        <SectionActions file={file} />
       </div>
       <MarkdownView body={file.body} />
     </article>

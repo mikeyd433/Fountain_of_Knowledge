@@ -46,6 +46,7 @@ function parseFile(relPath, raw) {
 
   return {
     relPath: rel,
+    raw, // original markdown (frontmatter + body), for exact export
     route,
     title,
     category,

@@ -5,5 +5,6 @@ contextBridge.exposeInMainWorld('fokAPI', {
   isDesktop: true,
   listContent: () => ipcRenderer.invoke('content:list'),
   importFiles: (files) => ipcRenderer.invoke('content:import', files),
+  exportFile: (name, content) => ipcRenderer.invoke('content:export', { name, content }),
   revealContentFolder: () => ipcRenderer.invoke('content:reveal'),
 });

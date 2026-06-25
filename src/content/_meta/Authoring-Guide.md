@@ -39,6 +39,17 @@ without a `category` land under **Imported**).
 > [!note] The desktop app's content folder persists across app updates and
 > reinstalls, so your notes are safe.
 
+### Editing a page
+
+Every page has two buttons under its title:
+
+- **⬇ Export .md** — downloads this page's exact markdown file. Drop that file
+  into a new Claude chat to revise it.
+- **⤴ Replace…** — click to pick (or drop a `.md` file onto the box) to overwrite
+  *this* page with the new version. The page reloads with your changes.
+
+So the round-trip is: **Export → edit with Claude → Replace.**
+
 ## Frontmatter
 
 Every file starts with YAML frontmatter. Only `title` is required.

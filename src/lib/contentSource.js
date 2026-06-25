@@ -52,6 +52,28 @@ export async function importFiles(payload) {
   return data;
 }
 
+// Export (download / save) a markdown file. Returns { ok, canceled?, error? }.
+export async function exportFile(name, content) {
+  if (isDesktop() && window.fokAPI.exportFile) {
+    return window.fokAPI.exportFile(name, content);
+  }
+  // Web/dev fallback: trigger a browser download.
+  try {
+    const blob = new Blob([content], { type: 'text/markdown;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: String((e && e.message) || e) };
+  }
+}
+
 // Open the content folder in the OS file manager (desktop only).
 export async function revealContentFolder() {
   if (isDesktop() && window.fokAPI.revealContentFolder) {
