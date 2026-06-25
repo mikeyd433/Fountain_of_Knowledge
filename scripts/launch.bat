@@ -44,8 +44,13 @@ if not defined BROWSER for %%P in (
   "%ProgramFiles%\Microsoft\Edge\Application\msedge.exe"
 ) do if exist "%%~P" set "BROWSER=%%~P"
 
+REM A dedicated profile dir forces a standalone app window even when the
+REM browser is already open (otherwise it can land as a tab in an existing
+REM window). --window-size keeps it compact.
+set "APPDATADIR=%LocalAppData%\FountainOfKnowledge\browser"
+
 if defined BROWSER (
-  start "" "%BROWSER%" --app=%URL% --window-size=1200,840
+  start "" "%BROWSER%" --app=%URL% --window-size=1024,720 --user-data-dir="%APPDATADIR%"
 ) else (
   REM No Chromium browser found: fall back to the default browser.
   start "" "%URL%"
