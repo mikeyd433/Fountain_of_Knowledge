@@ -82,14 +82,24 @@ tags: [routing, sends, busses] # optional — feeds search
 
 ### Nesting as deep as you like
 
-`section` can be a **path**, so the tree can nest arbitrarily deep (limited only
-by your OS's path length). Use a `/`-separated string or a list:
+There are **two separate kinds of nesting** — don't mix them up:
+
+- **Inside a page:** Markdown headings `##`, `###` … `######` (up to 6 levels).
+  These structure the content *within* one page; they do **not** create sidebar
+  entries.
+- **The sidebar tree:** driven by `category` + `section`. This is the navigable
+  folder structure, and it can go **arbitrarily deep** (limited only by your
+  OS's path length).
+
+To nest the tree, make `section` a **path** — a `/`-separated string or a list:
 
 ```yaml
 section: Workflows/Routing/Advanced      # Category › Workflows › Routing › Advanced › <page>
 # or:
 section: [Workflows, Routing, Advanced]
 ```
+
+(Bundles can nest per-page via their headings too — see below.)
 
 ## Multi-page files (bundles)
 

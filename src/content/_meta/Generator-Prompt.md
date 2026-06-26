@@ -68,3 +68,35 @@ Authoring Guide for where that lives.)
 > [!tip] Use the `order` field if you want a specific file to sit at the top of
 > its group instead of alphabetical order. For several pages from one file, fill
 > in the **Pages** line — see **Multi-page files** in the Authoring Guide.
+
+## Explaining nesting to a chat
+
+Paste this block if you want the chat to nest pages into deep sections:
+
+````text
+This reader has TWO separate kinds of nesting:
+
+1) Inside a page — Markdown headings ##, ###, … up to ######. These structure
+   content WITHIN one page and do NOT create sidebar entries.
+
+2) The sidebar tree (navigable folders) — set by frontmatter, and it can be
+   arbitrarily deep. Two ways to nest it:
+
+   a) Single page: make `section` a path — a "/"-separated string or a list:
+        section: Workflows/Routing/Advanced
+        section: [Workflows, Routing, Advanced]
+      With `category: REAPER` that page lands at:
+        REAPER › Workflows › Routing › Advanced › <title>
+
+   b) Bundle file (many pages in one file): add `bundle: true`, then start each
+      page with a "# Heading". A heading may itself be a path — the LAST segment
+      is the page title, earlier segments add folders (appended after the file's
+      `section`):
+        # Modeling/Edit Mode/Extrude   → …/Modeling/Edit Mode/Extrude
+        # Rendering                    → …/Rendering
+      Use "## " for sub-sections inside each page.
+
+Rules: "#" starts a page (in a bundle); "##"+ are in-page sections. Avoid a
+literal "/" in a page title, since "/" means "nest". Depth is effectively
+unlimited (bounded only by OS path length).
+````
