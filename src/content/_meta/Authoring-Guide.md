@@ -80,6 +80,17 @@ tags: [routing, sends, busses] # optional — feeds search
 ---
 ```
 
+### Nesting as deep as you like
+
+`section` can be a **path**, so the tree can nest arbitrarily deep (limited only
+by your OS's path length). Use a `/`-separated string or a list:
+
+```yaml
+section: Workflows/Routing/Advanced      # Category › Workflows › Routing › Advanced › <page>
+# or:
+section: [Workflows, Routing, Advanced]
+```
+
 ## Multi-page files (bundles)
 
 Want several pages in a section but only want to manage **one** file? Add
@@ -117,6 +128,18 @@ for its sub-sections as usual.
 > [!tip] Drop the bundle file like any other. Re-dropping an edited version
 > overwrites the same pages (the titles drive where they land), so it stays in
 > sync — no duplicates.
+
+A bundle heading can itself be a **path** to nest a page deeper than the file's
+`section`. The last segment is the page title; the rest extend the path:
+
+```markdown
+# Modeling/Edit Mode/Extrude     → …/Modeling/Edit Mode/Extrude
+# Modeling/Edit Mode/Bevel       → …/Modeling/Edit Mode/Bevel
+# Rendering                      → …/Rendering
+```
+
+> [!note] Because `/` means "nest", avoid literal slashes in a page title — use
+> a different character (e.g. "TCP-IP") if you need one.
 
 ## Conventions
 

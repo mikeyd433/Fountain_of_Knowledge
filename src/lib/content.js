@@ -26,6 +26,20 @@ function extractHeadings(body) {
   return out;
 }
 
+// Normalize a `section` value into an ordered list of nesting levels.
+// Accepts an array (["A","B"]) or a "/"-separated string ("A/B"); empty/missing
+// falls back to the provided default (on-disk subfolders).
+function sectionParts(section, fallback = []) {
+  if (Array.isArray(section)) {
+    return section.map((s) => String(s).trim()).filter(Boolean);
+  }
+  if (typeof section === 'string') {
+    const parts = section.split('/').map((s) => s.trim()).filter(Boolean);
+    if (parts.length) return parts;
+  }
+  return fallback;
+}
+
 // Parse one file into a normalized record. `relPath` may be either a bare
 // content-relative path ("REAPER/Shortcuts.md") or a glob path
 // ("../content/REAPER/Shortcuts.md"); both are handled.
@@ -39,7 +53,9 @@ function parseFile(relPath, raw) {
 
   const title = data.title || fileName;
   const category = data.category || folders[0] || 'General';
-  const subFolders = data.section ? [data.section] : folders.slice(1);
+  // `section` may be a path for arbitrary nesting: a "/"-separated string or
+  // an array of levels. Falls back to on-disk subfolders.
+  const subFolders = sectionParts(data.section, folders.slice(1));
 
   const treePath = [category, ...subFolders];
   const route = '/' + [...treePath, title].map(slug).join('/');

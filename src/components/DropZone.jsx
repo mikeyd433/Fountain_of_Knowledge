@@ -12,8 +12,16 @@ function cleanSeg(s) {
     .trim();
 }
 
-// Decide where a dropped file lands: src/content/<category>/<section>/<name>.md
+// Normalize a `section` value (array or "/"-separated string) into levels.
+function sectionLevels(section) {
+  if (Array.isArray(section)) return section.map(cleanSeg).filter(Boolean);
+  if (typeof section === 'string') return section.split('/').map(cleanSeg).filter(Boolean);
+  return [];
+}
+
+// Decide where a dropped file lands: <category>/<...section levels>/<name>.md
 // Category/section come from the file's own frontmatter; default to "Imported".
+// `section` may be a path (string with "/" or an array) for arbitrary nesting.
 function deriveRelPath(fileName, raw) {
   let data = {};
   try {
@@ -22,10 +30,10 @@ function deriveRelPath(fileName, raw) {
     data = {};
   }
   const category = cleanSeg(data.category || 'Imported') || 'Imported';
-  const section = data.section ? cleanSeg(data.section) : null;
+  const levels = sectionLevels(data.section);
   let name = cleanSeg(fileName) || 'untitled.md';
   if (!/\.md$/i.test(name)) name += '.md';
-  return [category, section, name].filter(Boolean).join('/');
+  return [category, ...levels, name].filter(Boolean).join('/');
 }
 
 // A "bundle" is one file that defines several pages. Marked with `bundle: true`
@@ -61,15 +69,23 @@ function expandBundle(raw) {
   if (pages.length === 0) return null;
 
   const baseOrder = typeof fm.order === 'number' ? fm.order : 0;
+  const baseSection = sectionLevels(fm.section); // file-level section path
   return pages.map((pg, i) => {
-    const pageFm = { title: pg.title };
+    // A heading may itself be a path ("Modeling/Edit Mode/Extrude") to nest
+    // deeper; the last segment is the page title, the rest extend the section.
+    const headParts = pg.title.split('/').map((s) => s.trim()).filter(Boolean);
+    const pageTitle = headParts.length ? headParts[headParts.length - 1] : pg.title;
+    const extra = headParts.slice(0, -1);
+    const levels = [...baseSection, ...extra];
+
+    const pageFm = { title: pageTitle };
     if (fm.category) pageFm.category = fm.category;
-    if (fm.section) pageFm.section = fm.section;
+    if (levels.length) pageFm.section = levels.join('/');
     if (fm.icon) pageFm.icon = fm.icon;
     if (Array.isArray(fm.tags)) pageFm.tags = fm.tags;
     pageFm.order = baseOrder + i + 1;
     const content = matter.stringify(pg.body.join('\n').trim() + '\n', pageFm);
-    return { relPath: deriveRelPath(pg.title + '.md', content), content };
+    return { relPath: deriveRelPath(pageTitle + '.md', content), content };
   });
 }
 
