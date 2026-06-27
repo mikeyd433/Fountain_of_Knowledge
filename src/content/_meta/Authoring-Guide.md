@@ -197,6 +197,24 @@ a `#` handle that points at itself.
 > [!tip] Two headings with the same text get numbered slugs — the first is
 > `#setup`, the next `#setup-1`, and so on.
 
+### Tooltips
+
+Mark a word so a note pops up when you hover (or keyboard-focus) it. Write
+`{{term|tooltip text}}` — the part before the `|` is shown in the text, the part
+after is the tooltip:
+
+The {{transport|the strip with play, stop and record}} runs along the top.
+
+```markdown
+The {{transport|the strip with play, stop and record}} runs along the top.
+```
+
+Inline code is never touched, so a literal `{{x|y}}` inside backticks stays as-is.
+
+> [!tip] Keep tips short — a phrase, not a paragraph. Because `|` is also the
+> column separator in GFM tables, avoid tooltips inside table cells (or escape
+> the pipe as `\|`).
+
 ### Copy-able commands
 
 Any fenced code block gets an automatic copy button:

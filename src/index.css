@@ -462,6 +462,69 @@ a:hover {
 .markdown-body a.anchor-link:hover {
   border-bottom-color: var(--accent);
 }
+/* ------------------------------------------------------------
+   Inline tooltips ({{term|tip}})
+   ------------------------------------------------------------ */
+.tooltip-term {
+  position: relative;
+  border-bottom: 1px dotted var(--accent);
+  cursor: help;
+  /* hint that it's interactive even on touch */
+  text-decoration: none;
+}
+.tooltip-term:focus {
+  outline: 2px solid var(--accent-soft);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+/* The bubble — built from the data-tip attribute. Left-anchored to the term so
+   it grows rightward and won't clip against the scroll container's left edge. */
+.tooltip-term::after {
+  content: attr(data-tip);
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 8px);
+  transform: translateY(4px);
+  z-index: 20;
+  width: max-content;
+  max-width: 260px;
+  white-space: normal;
+  text-align: left;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.4;
+  color: var(--text);
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 7px 10px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.12s ease, transform 0.12s ease;
+}
+/* The little arrow under the bubble, near its left edge. */
+.tooltip-term::before {
+  content: '';
+  position: absolute;
+  left: 10px;
+  bottom: calc(100% + 3px);
+  transform: translateY(4px);
+  z-index: 21;
+  border: 5px solid transparent;
+  border-top-color: var(--border);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.12s ease, transform 0.12s ease;
+}
+.tooltip-term:hover::after,
+.tooltip-term:focus::after,
+.tooltip-term:hover::before,
+.tooltip-term:focus::before {
+  opacity: 1;
+  transform: translateY(0);
+}
+
 /* Brief flash on the heading you jumped to. */
 .anchor-target {
   animation: anchor-flash 1.6s ease;

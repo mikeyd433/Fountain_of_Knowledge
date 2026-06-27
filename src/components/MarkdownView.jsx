@@ -8,6 +8,7 @@ import Callout from './Callout.jsx';
 import CodeBlock from './CodeBlock.jsx';
 import { isKeyCombo } from '../lib/keys.js';
 import { rehypeHeadingIds } from '../lib/slug.js';
+import { remarkTooltips } from '../lib/tooltips.js';
 
 const ALERT_RE = /^\s*\[!(tip|note|warning|danger)\]\s?/i;
 
@@ -152,7 +153,7 @@ export default function MarkdownView({ body }) {
   return (
     <div className="markdown-body">
       <ReactMarkdown
-        remarkPlugins={[remarkGfm]}
+        remarkPlugins={[remarkGfm, remarkTooltips]}
         rehypePlugins={[rehypeRaw, rehypeHeadingIds]}
         components={components}
       >

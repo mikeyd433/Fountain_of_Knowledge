@@ -88,6 +88,8 @@ tags: [routing, sends, busses]
 - **Section links** — every heading is an anchor. Link to one in the same page
   with `[text](#heading-slug)` (the slug is the title lowercased with spaces as
   hyphens); the link smooth-scrolls to it. Hover a heading for its `#` handle.
+- **Tooltips** — `{{term|tooltip text}}` shows *term* in the prose and pops the
+  tooltip up on hover or keyboard focus.
 - **Copy buttons** — every fenced code block gets one automatically.
 
 The full guide and a reusable Claude generator prompt live inside the reader
