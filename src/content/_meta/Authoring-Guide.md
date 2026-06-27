@@ -250,6 +250,32 @@ See [{{Boolean|a truthy/falsy value}}](#/recipes/booleans#what-is-a-bool).
 > and even an escaped `\|` won't render the tooltip. Keep them in regular prose,
 > lists, and callouts.
 
+### Glossary (reference tooltips)
+
+Rather than repeating the same tip everywhere, define a term **once** in a fenced
+`glossary` block — one `Term | definition` per line — and reference it anywhere.
+The block renders as a table *and* registers each term for tooltips across the
+whole library:
+
+```glossary
+Transport | the strip with play, stop and record
+Bus       | a channel that other tracks are routed into
+Sample rate | how many audio samples are captured per second
+```
+
+Then reference an entry two ways:
+
+- **Bare** `{{Transport}}` — looks the gloss up by the term itself.
+- **Keyed** `{{label|@sample-rate}}` — shows your own *label* but pulls the gloss
+  by key (the key is the term lowercased with spaces as hyphens).
+
+Both resolve from that one definition: a {{Transport}} bar, the playback {{rate|@sample-rate}},
+and a {{Bus}} for grouping.
+
+> [!tip] Define the block on a dedicated **Glossary** page and it's available
+> everywhere — references work across pages, not just the page that defines them.
+> An unresolved reference (typo'd key) is left as literal `{{…}}` so you can spot it.
+
 ### Copy-able commands
 
 Any fenced code block gets an automatic copy button:

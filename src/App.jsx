@@ -134,6 +134,7 @@ function Layout() {
 
 function FileView({ file }) {
   const location = useLocation();
+  const { glossary } = useLibrary();
   useEffect(() => {
     document.title = `${file.title} · Fountain of Knowledge`;
     // A cross-page deep-link carries the target heading in the route hash, e.g.
@@ -168,7 +169,7 @@ function FileView({ file }) {
         )}
         <SectionActions file={file} />
       </div>
-      <MarkdownView body={file.body} />
+      <MarkdownView body={file.body} glossary={glossary} />
     </article>
   );
 }

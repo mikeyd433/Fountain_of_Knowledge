@@ -4,6 +4,7 @@ import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
 import Keycap from './Keycap.jsx';
 import ShortcutTable from './ShortcutTable.jsx';
+import GlossaryTable from './GlossaryTable.jsx';
 import Callout from './Callout.jsx';
 import CodeBlock from './CodeBlock.jsx';
 import { isKeyCombo } from '../lib/keys.js';
@@ -94,6 +95,7 @@ const components = {
     if (match) {
       const lang = match[1];
       if (lang === 'shortcuts') return <ShortcutTable source={text} />;
+      if (lang === 'glossary') return <GlossaryTable source={text} />;
       return <CodeBlock code={text} lang={lang} />;
     }
 
@@ -146,11 +148,11 @@ const components = {
   },
 };
 
-export default function MarkdownView({ body }) {
+export default function MarkdownView({ body, glossary }) {
   return (
     <div className="markdown-body">
       <ReactMarkdown
-        remarkPlugins={[remarkGfm, remarkTooltips]}
+        remarkPlugins={[remarkGfm, [remarkTooltips, { glossary }]]}
         rehypePlugins={[rehypeRaw, rehypeHeadingIds]}
         components={components}
       >

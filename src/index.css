@@ -638,6 +638,44 @@ a:hover {
   width: 1%;
 }
 
+/* Glossary table — same shell as shortcut tables. */
+.glossary-table {
+  border-collapse: separate;
+  border-spacing: 0;
+  width: 100%;
+  margin: 16px 0;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  font-size: 14px;
+}
+.glossary-table thead th {
+  background: var(--code-bg);
+  text-align: left;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  padding: 8px 14px;
+}
+.glossary-table td {
+  padding: 9px 14px;
+  border-top: 1px solid var(--border-soft);
+  vertical-align: top;
+}
+.glossary-table tbody tr:nth-child(odd) {
+  background: var(--bg-elev);
+}
+.glossary-term {
+  color: var(--text);
+  font-weight: 600;
+  white-space: nowrap;
+  width: 1%;
+}
+.glossary-def {
+  color: var(--text-dim);
+}
+
 /* ============================================================
    Callouts
    ============================================================ */

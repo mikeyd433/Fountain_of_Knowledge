@@ -26,6 +26,31 @@ function extractHeadings(body) {
   return out;
 }
 
+// Collect glossary entries from a ```glossary fenced block: one "Term | gloss"
+// per line. The lookup key is the slugged term, so `{{Term}}` resolves to it.
+function extractGlossary(body) {
+  const out = {};
+  const lines = body.split('\n');
+  let inGloss = false;
+  for (const line of lines) {
+    const fence = /^\s*```(\w*)/.exec(line);
+    if (fence) {
+      if (!inGloss && fence[1] === 'glossary') inGloss = true;
+      else if (inGloss) inGloss = false;
+      continue;
+    }
+    if (!inGloss) continue;
+    const t = line.trim();
+    if (!t || /^[-|\s]+$/.test(t)) continue;
+    const idx = t.indexOf('|');
+    if (idx === -1) continue;
+    const term = t.slice(0, idx).trim();
+    const gloss = t.slice(idx + 1).trim();
+    if (term && gloss) out[slug(term)] = gloss;
+  }
+  return out;
+}
+
 // Normalize a `section` value into an ordered list of nesting levels.
 // Accepts an array (["A","B"]) or a "/"-separated string ("A/B"); empty/missing
 // falls back to the provided default (on-disk subfolders).
@@ -159,7 +184,12 @@ export function buildLibrary(rawMap) {
   const fileByRoute = new Map(files.map((f) => [f.route, f]));
   const categories = topCategories(tree);
   const firstRoute = files.length ? files[0].route : null;
-  return { files, tree, fileByRoute, categories, firstRoute };
+  // Merge every page's ```glossary entries into one library-wide map of
+  // key → gloss text, so reference tooltips ({{term}}, {{x|@key}}) resolve
+  // from any page. Later files win on duplicate keys.
+  const glossary = {};
+  for (const f of files) Object.assign(glossary, extractGlossary(f.body));
+  return { files, tree, fileByRoute, categories, firstRoute, glossary };
 }
 
 // Route a dropped file will get once written — same derivation as the loader.

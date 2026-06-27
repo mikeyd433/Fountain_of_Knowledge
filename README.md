@@ -92,6 +92,9 @@ tags: [routing, sends, busses]
   its `#` handle.
 - **Tooltips** — `{{term|tooltip text}}` shows *term* in the prose and pops the
   plain-text tooltip up on hover or keyboard focus (not inside table cells).
+- **Glossary** — define terms once in a fenced `glossary` block (`Term |
+  definition`); it renders as a table and powers reference tooltips library-wide
+  via `{{Term}}` or `{{label|@key}}`.
 - **Copy buttons** — every fenced code block gets one automatically.
 
 The full guide and a reusable Claude generator prompt live inside the reader
