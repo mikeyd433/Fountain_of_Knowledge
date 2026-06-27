@@ -85,11 +85,13 @@ tags: [routing, sends, busses]
   renders as a styled two-column table.
 - **Callouts** — `> [!tip]`, `> [!note]`, `> [!warning]`, `> [!danger]`
   blockquotes render as colored boxes.
-- **Section links** — every heading is an anchor. Link to one in the same page
-  with `[text](#heading-slug)` (the slug is the title lowercased with spaces as
-  hyphens); the link smooth-scrolls to it. Hover a heading for its `#` handle.
+- **Section links** — every heading is an anchor. Link within the same page with
+  `[text](#heading-slug)` (slug = title lowercased, spaces → hyphens); it
+  smooth-scrolls. Link to another page by its route, `[text](#/category/title)`,
+  optionally with a trailing `#heading` to land on a section. Hover a heading for
+  its `#` handle.
 - **Tooltips** — `{{term|tooltip text}}` shows *term* in the prose and pops the
-  tooltip up on hover or keyboard focus.
+  plain-text tooltip up on hover or keyboard focus (not inside table cells).
 - **Copy buttons** — every fenced code block gets one automatically.
 
 The full guide and a reusable Claude generator prompt live inside the reader

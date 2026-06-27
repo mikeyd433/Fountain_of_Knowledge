@@ -28,19 +28,23 @@ function tooltipNode(term, tip) {
   };
 }
 
-// Split one text value into a run of text/tooltip nodes. Returns the original
-// node untouched (as a single-element array) when there's nothing to mark.
+// Split one text value into a run of text/tooltip nodes. Returns null when there
+// is no tooltip to mark (so the caller keeps the original node untouched). Note
+// a sole "{{term|tip}}" — e.g. a whole link label — yields a single tooltip node,
+// which must still count as a match.
 function splitText(value) {
   const re = new RegExp(TIP_RE.source, 'g');
   const out = [];
   let last = 0;
   let m;
+  let matched = false;
   while ((m = re.exec(value))) {
+    matched = true;
     if (m.index > last) out.push({ type: 'text', value: value.slice(last, m.index) });
     out.push(tooltipNode(m[1].trim(), m[2].trim()));
     last = m.index + m[0].length;
   }
-  if (out.length === 0) return [{ type: 'text', value }];
+  if (!matched) return null;
   if (last < value.length) out.push({ type: 'text', value: value.slice(last) });
   return out;
 }
@@ -53,8 +57,12 @@ function walk(node) {
     // Leave code spans/blocks alone; only mark prose text.
     if (child.type === 'text' && child.value.includes('{{')) {
       const parts = splitText(child.value);
-      if (parts.length > 1) changed = true;
-      next.push(...parts);
+      if (parts) {
+        changed = true;
+        next.push(...parts);
+      } else {
+        next.push(child);
+      }
     } else {
       if (child.type !== 'inlineCode' && child.type !== 'code') walk(child);
       next.push(child);

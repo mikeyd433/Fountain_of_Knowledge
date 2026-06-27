@@ -197,6 +197,30 @@ a `#` handle that points at itself.
 > [!tip] Two headings with the same text get numbered slugs — the first is
 > `#setup`, the next `#setup-1`, and so on.
 
+Heading anchors only resolve **within the page you're on** (slugs are per-page, so
+two pages can each have their own `#overview`).
+
+### Linking to another page
+
+To link from one page to another, target that page's **route** — `#/` followed by
+its slugged location (`category / section… / title`, each lowercased with spaces
+as hyphens). For a bundle, the page's title is the **last** segment of its `#`
+heading:
+
+```markdown
+See the [Routing](#/reaper/workflows/routing) page.
+```
+
+Add a `#heading` on the end to land on a specific section of that page:
+
+```markdown
+Jump straight to [Routing › Sends](#/reaper/workflows/routing#sends).
+```
+
+> [!note] A bare `#slug` link stays on the current page; a `#/…` link navigates to
+> another page. The page's own title heading isn't an anchor, so a plain
+> `#/…/page` link (no trailing `#heading`) lands at the top.
+
 ### Tooltips
 
 Mark a word so a note pops up when you hover (or keyboard-focus) it. Write
@@ -210,10 +234,21 @@ The {{transport|the strip with play, stop and record}} runs along the top.
 ```
 
 Inline code is never touched, so a literal `{{x|y}}` inside backticks stays as-is.
+The tip is plain text — markdown, links and line breaks inside it won't render, so
+keep it to a short phrase.
 
-> [!tip] Keep tips short — a phrase, not a paragraph. Because `|` is also the
-> column separator in GFM tables, avoid tooltips inside table cells (or escape
-> the pipe as `\|`).
+A term can be **both** a link and a tooltip — wrap the `{{…}}` in a normal link.
+Here the word is a tooltip *and* jumps to the [Tooltips](#tooltips) heading:
+
+[{{transport|the strip with play, stop and record}}](#tooltips) — hover it, then click it.
+
+```markdown
+See [{{Boolean|a truthy/falsy value}}](#/recipes/booleans#what-is-a-bool).
+```
+
+> [!note] Tooltips don't work inside GFM table cells — the `|` splits the cell,
+> and even an escaped `\|` won't render the tooltip. Keep them in regular prose,
+> lists, and callouts.
 
 ### Copy-able commands
 

@@ -7,7 +7,7 @@ import ShortcutTable from './ShortcutTable.jsx';
 import Callout from './Callout.jsx';
 import CodeBlock from './CodeBlock.jsx';
 import { isKeyCombo } from '../lib/keys.js';
-import { rehypeHeadingIds } from '../lib/slug.js';
+import { rehypeHeadingIds, flashScrollTo } from '../lib/slug.js';
 import { remarkTooltips } from '../lib/tooltips.js';
 
 const ALERT_RE = /^\s*\[!(tip|note|warning|danger)\]\s?/i;
@@ -19,12 +19,7 @@ function scrollToAnchor(event, rawHref) {
   const href = rawHref || event.currentTarget.getAttribute('href') || '';
   if (!href.startsWith('#')) return;
   event.preventDefault();
-  const id = decodeURIComponent(href.slice(1));
-  const el = id && document.getElementById(id);
-  if (!el) return;
-  el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  el.classList.add('anchor-target');
-  window.setTimeout(() => el.classList.remove('anchor-target'), 1600);
+  flashScrollTo(decodeURIComponent(href.slice(1)));
 }
 
 // Render h1–h6 with the slug `id` (added by rehypeHeadingIds) plus a hover
@@ -123,8 +118,10 @@ const components = {
   },
 
   a({ node, href, children, ...props }) {
-    // In-page anchor: scroll instead of navigating (HashRouter owns the URL hash).
-    if (href && href.startsWith('#')) {
+    // In-page anchor (#slug): scroll within the current page. A #/route link is
+    // a HashRouter destination (optionally with a #heading) — leave it alone so
+    // the browser/router navigates; FileView scrolls to any #heading on arrival.
+    if (href && href.startsWith('#') && !href.startsWith('#/')) {
       return (
         <a
           href={href}

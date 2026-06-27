@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, Outlet, Route, Routes, useLocation } from 'react-router-dom';
+import { settleScrollTo } from './lib/slug.js';
 import { buildLibrary } from './lib/content.js';
 import { loadRawFiles, deleteFiles } from './lib/contentSource.js';
 import { createSearch } from './lib/search.js';
@@ -14,6 +15,14 @@ import DropZone from './components/DropZone.jsx';
 import SectionActions from './components/SectionActions.jsx';
 
 const EXPAND_KEY = 'fok-expanded';
+
+// Reset to the top of a page. The scroll container is `.content` (not the
+// window), so reset both to cover desktop and the stacked mobile layout.
+function scrollTop() {
+  window.scrollTo(0, 0);
+  const c = document.querySelector('.content');
+  if (c) c.scrollTop = 0;
+}
 
 function allFolderPaths(node, acc = []) {
   for (const f of node.folders) {
@@ -124,13 +133,21 @@ function Layout() {
 }
 
 function FileView({ file }) {
+  const location = useLocation();
   useEffect(() => {
     document.title = `${file.title} · Fountain of Knowledge`;
-    window.scrollTo(0, 0);
+    // A cross-page deep-link carries the target heading in the route hash, e.g.
+    // #/cat/page#section. Scroll to it; otherwise (plain page link) start at top.
+    const target = location.hash ? decodeURIComponent(location.hash.slice(1)) : '';
+    // settleScrollTo keeps the heading pinned through async reflow; if the
+    // heading isn't found (or there's none), just start at the top.
+    const cleanup = target ? settleScrollTo(target) : null;
+    if (!cleanup) scrollTop();
     return () => {
+      if (cleanup) cleanup();
       document.title = 'Fountain of Knowledge';
     };
-  }, [file]);
+  }, [file, location.pathname, location.hash]);
 
   return (
     <article className="doc">
