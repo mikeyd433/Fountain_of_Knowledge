@@ -7,8 +7,46 @@ import ShortcutTable from './ShortcutTable.jsx';
 import Callout from './Callout.jsx';
 import CodeBlock from './CodeBlock.jsx';
 import { isKeyCombo } from '../lib/keys.js';
+import { rehypeHeadingIds } from '../lib/slug.js';
 
 const ALERT_RE = /^\s*\[!(tip|note|warning|danger)\]\s?/i;
+
+// Scroll an in-page anchor target into view and flash it briefly.
+// We do this manually because the app runs under HashRouter, which owns the
+// URL fragment — letting the browser follow a `#id` link would clobber the route.
+function scrollToAnchor(event, rawHref) {
+  const href = rawHref || event.currentTarget.getAttribute('href') || '';
+  if (!href.startsWith('#')) return;
+  event.preventDefault();
+  const id = decodeURIComponent(href.slice(1));
+  const el = id && document.getElementById(id);
+  if (!el) return;
+  el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  el.classList.add('anchor-target');
+  window.setTimeout(() => el.classList.remove('anchor-target'), 1600);
+}
+
+// Render h1–h6 with the slug `id` (added by rehypeHeadingIds) plus a hover
+// "#" affordance that links to the section.
+function heading(Tag) {
+  return function Heading({ node, children, id, ...props }) {
+    return (
+      <Tag id={id} {...props}>
+        {children}
+        {id && (
+          <a
+            href={`#${id}`}
+            className="heading-anchor"
+            aria-label="Link to this section"
+            onClick={scrollToAnchor}
+          >
+            #
+          </a>
+        )}
+      </Tag>
+    );
+  };
+}
 
 // Pull the plain text out of a hast node (for alert detection).
 function nodeText(node) {
@@ -41,6 +79,13 @@ function stripMarker(children) {
 }
 
 const components = {
+  h1: heading('h1'),
+  h2: heading('h2'),
+  h3: heading('h3'),
+  h4: heading('h4'),
+  h5: heading('h5'),
+  h6: heading('h6'),
+
   // Make <pre> transparent; the code component renders the full block.
   pre({ children }) {
     return <>{children}</>;
@@ -77,6 +122,19 @@ const components = {
   },
 
   a({ node, href, children, ...props }) {
+    // In-page anchor: scroll instead of navigating (HashRouter owns the URL hash).
+    if (href && href.startsWith('#')) {
+      return (
+        <a
+          href={href}
+          className="anchor-link"
+          onClick={scrollToAnchor}
+          {...props}
+        >
+          {children}
+        </a>
+      );
+    }
     const external = href && /^https?:\/\//.test(href);
     return (
       <a
@@ -95,7 +153,7 @@ export default function MarkdownView({ body }) {
     <div className="markdown-body">
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
-        rehypePlugins={[rehypeRaw]}
+        rehypePlugins={[rehypeRaw, rehypeHeadingIds]}
         components={components}
       >
         {body}

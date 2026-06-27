@@ -85,6 +85,9 @@ tags: [routing, sends, busses]
   renders as a styled two-column table.
 - **Callouts** — `> [!tip]`, `> [!note]`, `> [!warning]`, `> [!danger]`
   blockquotes render as colored boxes.
+- **Section links** — every heading is an anchor. Link to one in the same page
+  with `[text](#heading-slug)` (the slug is the title lowercased with spaces as
+  hyphens); the link smooth-scrolls to it. Hover a heading for its `#` handle.
 - **Copy buttons** — every fenced code block gets one automatically.
 
 The full guide and a reusable Claude generator prompt live inside the reader

@@ -180,6 +180,23 @@ Start a blockquote with `[!type]` to get a colored box. Types: `tip`, `note`,
 
 > [!warning] This is a warning callout.
 
+### Linking between parts of a page
+
+Every heading is an anchor. Link to one from anywhere in the **same page** with a
+standard markdown link whose target is `#` plus the heading's *slug* — the title
+lowercased, with spaces turned into hyphens and punctuation dropped:
+
+```markdown
+See [Shortcut tables](#shortcut-tables) below, or jump to [Callouts](#callouts).
+```
+
+So `## Shortcut tables` is reachable at `#shortcut-tables`. Clicking the link
+smooth-scrolls to that heading and flashes it briefly. Hover any heading to reveal
+a `#` handle that points at itself.
+
+> [!tip] Two headings with the same text get numbered slugs — the first is
+> `#setup`, the next `#setup-1`, and so on.
+
 ### Copy-able commands
 
 Any fenced code block gets an automatic copy button:

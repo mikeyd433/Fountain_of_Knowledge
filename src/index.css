@@ -418,6 +418,67 @@ a:hover {
   padding: 1px 6px;
   font-size: 0.88em;
 }
+
+/* ------------------------------------------------------------
+   Intra-page hyperlinks (anchors between parts of a file)
+   ------------------------------------------------------------ */
+.markdown-body h1,
+.markdown-body h2,
+.markdown-body h3,
+.markdown-body h4,
+.markdown-body h5,
+.markdown-body h6 {
+  /* keep the heading clear of the viewport top when scrolled to */
+  scroll-margin-top: 16px;
+  position: relative;
+}
+/* The "#" affordance after a heading — hidden until the heading is hovered. */
+.heading-anchor {
+  margin-left: 8px;
+  color: var(--text-faint);
+  text-decoration: none;
+  opacity: 0;
+  transition: opacity 0.12s ease, color 0.12s ease;
+  font-weight: 400;
+}
+.markdown-body h1:hover .heading-anchor,
+.markdown-body h2:hover .heading-anchor,
+.markdown-body h3:hover .heading-anchor,
+.markdown-body h4:hover .heading-anchor,
+.markdown-body h5:hover .heading-anchor,
+.markdown-body h6:hover .heading-anchor,
+.heading-anchor:focus {
+  opacity: 1;
+}
+.heading-anchor:hover {
+  color: var(--accent);
+}
+/* In-body links that point at a section in the same page. */
+.markdown-body a.anchor-link {
+  color: var(--accent);
+  text-decoration: none;
+  border-bottom: 1px solid var(--accent-soft);
+}
+.markdown-body a.anchor-link:hover {
+  border-bottom-color: var(--accent);
+}
+/* Brief flash on the heading you jumped to. */
+.anchor-target {
+  animation: anchor-flash 1.6s ease;
+}
+@keyframes anchor-flash {
+  0%,
+  35% {
+    background: var(--accent-soft);
+    box-shadow: 0 0 0 6px var(--accent-soft);
+    border-radius: 4px;
+  }
+  100% {
+    background: transparent;
+    box-shadow: 0 0 0 6px transparent;
+    border-radius: 4px;
+  }
+}
 .markdown-body blockquote {
   border-left: 3px solid var(--border);
   margin: 14px 0;
