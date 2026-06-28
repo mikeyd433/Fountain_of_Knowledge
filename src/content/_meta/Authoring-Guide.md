@@ -300,7 +300,7 @@ npm run app:dev
 
 To rebuild the installable app instead of running it from the terminal, use
 `npm run app:build` (in place of `npm run app:dev`), then run the installer at
-`dist-app\Fountain of Knowledge Setup 0.2.0.exe`.
+`dist-app\Fountain of Knowledge Setup 0.2.1.exe`.
 
 > [!tip] `git restore package-lock.json` just clears the change `npm install`
 > leaves behind so `git pull` won't complain. For routine updates later (no new

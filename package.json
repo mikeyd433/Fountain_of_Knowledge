@@ -1,7 +1,7 @@
 {
   "name": "fountain-of-knowledge",
   "private": true,
-  "version": "0.2.0",
+  "version": "0.2.1",
   "type": "module",
   "main": "electron/main.cjs",
   "description": "A private, browsable, cheat-sheet-aware reader for personal reference notes.",
