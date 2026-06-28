@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link, Outlet, Route, Routes, useLocation } from 'react-router-dom';
 import { settleScrollTo } from './lib/slug.js';
 import { buildLibrary } from './lib/content.js';
-import { loadRawFiles, deleteFiles } from './lib/contentSource.js';
+import { loadRawFiles, deleteFiles, isNoServer, NEEDS_APP_MSG } from './lib/contentSource.js';
 import { createSearch } from './lib/search.js';
 import { LibraryContext, useLibrary } from './lib/library.js';
 import TreeNode from './components/TreeNode.jsx';
@@ -90,13 +90,19 @@ function Sidebar() {
         `This permanently removes the file(s) and can't be undone.`
     );
     if (!ok) return;
-    const res = await deleteFiles(deletable);
+    let res;
+    try {
+      res = await deleteFiles(deletable);
+    } catch (e) {
+      res = { ok: false, error: String((e && e.message) || e) };
+    }
     // The backend now reports what actually went; treat a partial/failed delete
     // as an error instead of silently "succeeding" while files remain.
     if (!res || !res.ok) {
       const failed = res && res.failed;
-      const detail =
-        failed && failed.length
+      const detail = isNoServer(res && res.error)
+        ? NEEDS_APP_MSG
+        : failed && failed.length
           ? `${failed.length} item(s) couldn't be removed (${failed[0].error}). ` +
             `A file may be open in another program.`
           : (res && res.error) || 'unknown error';

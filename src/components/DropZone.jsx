@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { routeForDropped } from '../lib/content.js';
-import { importFiles as persistFiles, syncLibrary } from '../lib/contentSource.js';
+import { importFiles as persistFiles, syncLibrary, isNoServer, NEEDS_APP_MSG } from '../lib/contentSource.js';
 import { fileToEntries, dedupeRelPaths } from '../lib/importing.js';
 import { useLibrary } from '../lib/library.js';
 
@@ -135,12 +135,9 @@ export default function DropZone() {
       // Full reload so the library re-reads and picks up the new file(s).
       setTimeout(() => window.location.reload(), 800);
     } catch (e) {
-      const networkish = /Failed to fetch|NetworkError|bad response/i.test(String(e));
       setToast({
         type: 'err',
-        msg: networkish
-          ? 'Import needs the running app (the desktop shortcut / npm run dev).'
-          : 'Import failed: ' + (e.message || e),
+        msg: isNoServer(e) ? NEEDS_APP_MSG : 'Import failed: ' + (e.message || e),
       });
     }
   }
@@ -193,7 +190,10 @@ export default function DropZone() {
       window.location.hash = firstRoute ? '#' + firstRoute : '#/';
       setTimeout(() => window.location.reload(), 800);
     } catch (e) {
-      setToast({ type: 'err', msg: 'Replace failed: ' + (e.message || e) });
+      setToast({
+        type: 'err',
+        msg: isNoServer(e) ? NEEDS_APP_MSG : 'Replace failed: ' + (e.message || e),
+      });
     }
   }
 

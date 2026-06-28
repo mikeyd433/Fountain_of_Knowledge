@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { importFiles as persistFiles, exportFile, deleteFiles } from '../lib/contentSource.js';
+import { importFiles as persistFiles, exportFile, deleteFiles, isNoServer, NEEDS_APP_MSG } from '../lib/contentSource.js';
 import { routeForDropped } from '../lib/content.js';
 import { expandBundle, dedupeRelPaths } from '../lib/importing.js';
 
@@ -63,7 +63,7 @@ export default function SectionActions({ file }) {
       window.location.reload();
     } catch (e) {
       setBusy(false);
-      flash('err', 'Replace failed: ' + (e.message || e));
+      flash('err', isNoServer(e) ? NEEDS_APP_MSG : 'Replace failed: ' + (e.message || e));
     }
   }
 

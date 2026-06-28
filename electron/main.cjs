@@ -144,7 +144,13 @@ function listAllMd() {
 }
 
 function removeEmptyDirs(dir) {
-  for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+  let entries;
+  try {
+    entries = fs.readdirSync(dir, { withFileTypes: true });
+  } catch {
+    return; // dir missing/unreadable — nothing to prune
+  }
+  for (const e of entries) {
     if (e.isDirectory()) {
       const d = path.join(dir, e.name);
       removeEmptyDirs(d);

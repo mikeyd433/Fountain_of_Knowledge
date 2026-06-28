@@ -23,6 +23,40 @@ export function isDesktop() {
   return typeof window !== 'undefined' && !!window.fokAPI;
 }
 
+// POST JSON to a dev-server content endpoint, degrading gracefully. Returns the
+// parsed result, or { ok:false, error:'no-server' } when the endpoint isn't
+// reachable (e.g. a baked static build with no backend) so callers can show a
+// "needs the running app" message instead of a cryptic failure.
+async function postJSON(route, body) {
+  let res;
+  try {
+    res = await fetch(route, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+  } catch {
+    return { ok: false, error: 'no-server' };
+  }
+  if (!res.ok) {
+    const data = await res.json().catch(() => null);
+    if (data && data.ok !== undefined) return data;
+    // 404/405 → the import endpoints aren't mounted (no dev server).
+    return { ok: false, error: res.status === 404 || res.status === 405 ? 'no-server' : 'HTTP ' + res.status };
+  }
+  return res.json().catch(() => ({ ok: false, error: 'bad response' }));
+}
+
+// True when an error/result indicates the content backend isn't available.
+export function isNoServer(e) {
+  const s = String((e && e.message) || e || '');
+  return /no-server|Failed to fetch|NetworkError|bad response/i.test(s);
+}
+
+// One-liner the UI can show when an action needs the running app.
+export const NEEDS_APP_MSG =
+  'This needs the running app — use the desktop app or `npm run dev`.';
+
 // Returns a { relPath: rawMarkdown } map.
 export async function loadRawFiles() {
   if (isDesktop() && window.fokAPI.listContent) {
@@ -40,16 +74,7 @@ export async function importFiles(payload) {
     return window.fokAPI.importFiles(payload);
   }
   // Web/dev fallback: the Vite dev-server endpoint.
-  const res = await fetch('/__import', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ files: payload }),
-  });
-  const data = await res.json().catch(() => ({ ok: false, error: 'bad response' }));
-  if (!res.ok && data.ok === undefined) {
-    return { ok: false, error: 'HTTP ' + res.status };
-  }
-  return data;
+  return postJSON('/__import', { files: payload });
 }
 
 // Mirror/merge the library from a batch of files. Returns { ok, written, deleted }.
@@ -62,12 +87,7 @@ export async function syncLibrary(files, opts = {}) {
   if (isDesktop() && window.fokAPI.syncLibrary) {
     return window.fokAPI.syncLibrary(body);
   }
-  const res = await fetch('/__sync', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
-  return res.json().catch(() => ({ ok: false, error: 'bad response' }));
+  return postJSON('/__sync', body);
 }
 
 // Delete specific files by relPath (e.g. a whole branch). Returns { ok, deleted }.
@@ -75,12 +95,7 @@ export async function deleteFiles(paths) {
   if (isDesktop() && window.fokAPI.deleteFiles) {
     return window.fokAPI.deleteFiles(paths);
   }
-  const res = await fetch('/__delete', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ paths }),
-  });
-  return res.json().catch(() => ({ ok: false, error: 'bad response' }));
+  return postJSON('/__delete', { paths });
 }
 
 // Export (download / save) a markdown file. Returns { ok, canceled?, error? }.
