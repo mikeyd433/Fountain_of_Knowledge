@@ -79,14 +79,28 @@ function Sidebar() {
   // Delete a branch (folder) or a single page, then refresh.
   const onDelete = useCallback(async (paths, label, count) => {
     if (!paths || paths.length === 0) return;
+    // The built-in Authoring Kit can't be deleted.
+    const deletable = paths.filter((p) => !String(p).startsWith('_meta/'));
+    if (deletable.length === 0) {
+      window.alert('The built-in Authoring Kit can’t be deleted.');
+      return;
+    }
     const ok = window.confirm(
       `Delete "${label}"${count > 1 ? ` and its ${count} pages` : ''}?\n\n` +
         `This permanently removes the file(s) and can't be undone.`
     );
     if (!ok) return;
-    const res = await deleteFiles(paths);
+    const res = await deleteFiles(deletable);
+    // The backend now reports what actually went; treat a partial/failed delete
+    // as an error instead of silently "succeeding" while files remain.
     if (!res || !res.ok) {
-      window.alert('Delete failed: ' + ((res && res.error) || 'unknown error'));
+      const failed = res && res.failed;
+      const detail =
+        failed && failed.length
+          ? `${failed.length} item(s) couldn't be removed (${failed[0].error}). ` +
+            `A file may be open in another program.`
+          : (res && res.error) || 'unknown error';
+      window.alert('Delete failed: ' + detail);
       return;
     }
     window.location.hash = '#/';

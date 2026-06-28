@@ -74,25 +74,37 @@ function makeContentOps(contentRoot) {
   function deleteFiles(paths) {
     if (!Array.isArray(paths) || paths.length === 0) throw new Error('no paths');
     const deleted = [];
+    const failed = [];
     for (const rel0 of paths) {
       const rel = String(rel0 || '').replace(/\\/g, '/');
       const segs = rel
         .split('/')
         .map((s) => s.trim())
         .filter((s) => s && s !== '.' && s !== '..');
-      if (segs.length === 0) continue;
+      if (segs.length === 0) {
+        failed.push({ path: rel, error: 'bad path' });
+        continue;
+      }
+      if (segs[0] === '_meta') continue; // protect the built-in Authoring Kit
       const target = path.resolve(contentRoot, segs.join('/'));
-      if (target === contentRoot || !target.startsWith(contentRoot + path.sep)) continue;
-      if (!target.toLowerCase().endsWith('.md')) continue;
+      if (target === contentRoot || !target.startsWith(contentRoot + path.sep)) {
+        failed.push({ path: rel, error: 'outside content folder' });
+        continue;
+      }
+      if (!target.toLowerCase().endsWith('.md')) {
+        failed.push({ path: rel, error: 'not a .md file' });
+        continue;
+      }
       try {
         fs.rmSync(target);
         deleted.push(segs.join('/'));
-      } catch {
-        /* ignore */
+      } catch (e) {
+        if (e && e.code === 'ENOENT') deleted.push(segs.join('/'));
+        else failed.push({ path: rel, error: (e && e.code) || String((e && e.message) || e) });
       }
     }
     removeEmptyDirs(contentRoot);
-    return { ok: true, deleted };
+    return { ok: failed.length === 0, deleted, failed };
   }
 
   function syncLibrary({ files, mode, preserve }) {

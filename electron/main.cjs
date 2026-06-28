@@ -50,18 +50,30 @@ function copyDir(src, dest) {
   }
 }
 
-// On first run, seed the user's content folder from the bundled defaults.
+// On first run, seed the user's content folder from the bundled defaults. A
+// marker file records that seeding has happened, so emptying the library later
+// (deleting everything) never silently re-adds the sample notes.
 function ensureContent() {
+  const marker = path.join(app.getPath('userData'), '.fok-seeded');
+  if (fs.existsSync(marker)) return;
   let empty = true;
   try {
     empty = !fs.existsSync(contentDir) || fs.readdirSync(contentDir).length === 0;
   } catch {
     empty = true;
   }
+  // Only seed a genuinely empty folder; an existing library (upgrading user) is
+  // just marked as initialized without re-copying anything.
   if (empty) {
     const src = defaultContentDir();
     if (fs.existsSync(src)) copyDir(src, contentDir);
     else fs.mkdirSync(contentDir, { recursive: true });
+  }
+  try {
+    fs.mkdirSync(path.dirname(marker), { recursive: true });
+    fs.writeFileSync(marker, new Date().toISOString());
+  } catch {
+    /* non-fatal: worst case we re-check next launch */
   }
 }
 
@@ -162,6 +174,7 @@ function deleteFiles(paths) {
     return { ok: false, error: 'no paths' };
   }
   const deleted = [];
+  const failed = [];
   try {
     for (const rel0 of paths) {
       const rel = String(rel0 || '').replace(/\\/g, '/');
@@ -169,21 +182,35 @@ function deleteFiles(paths) {
         .split('/')
         .map((s) => s.trim())
         .filter((s) => s && s !== '.' && s !== '..');
-      if (segs.length === 0) continue;
+      if (segs.length === 0) {
+        failed.push({ path: rel, error: 'bad path' });
+        continue;
+      }
+      // The built-in Authoring Kit is protected from deletion.
+      if (segs[0] === '_meta') continue;
       const target = path.resolve(contentDir, segs.join('/'));
-      if (target === contentDir || !target.startsWith(contentDir + path.sep)) continue;
-      if (!target.toLowerCase().endsWith('.md')) continue;
+      if (target === contentDir || !target.startsWith(contentDir + path.sep)) {
+        failed.push({ path: rel, error: 'outside content folder' });
+        continue;
+      }
+      if (!target.toLowerCase().endsWith('.md')) {
+        failed.push({ path: rel, error: 'not a .md file' });
+        continue;
+      }
       try {
         fs.rmSync(target);
         deleted.push(segs.join('/'));
-      } catch {
-        /* ignore */
+      } catch (e) {
+        // Already gone counts as deleted (idempotent); anything else is a real
+        // failure (e.g. the file is locked/open elsewhere on Windows).
+        if (e && e.code === 'ENOENT') deleted.push(segs.join('/'));
+        else failed.push({ path: rel, error: (e && e.code) || String((e && e.message) || e) });
       }
     }
     removeEmptyDirs(contentDir);
-    return { ok: true, deleted };
+    return { ok: failed.length === 0, deleted, failed };
   } catch (e) {
-    return { ok: false, error: String((e && e.message) || e) };
+    return { ok: false, error: String((e && e.message) || e), deleted, failed };
   }
 }
 

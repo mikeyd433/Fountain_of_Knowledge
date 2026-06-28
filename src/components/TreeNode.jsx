@@ -6,6 +6,9 @@ function collectFolderFiles(folder, acc = []) {
   return acc;
 }
 
+// The built-in Authoring Kit (under _meta/) is protected — don't offer delete.
+const isMeta = (relPath) => String(relPath).startsWith('_meta/');
+
 // Recursive folder/file node for the sidebar tree.
 export default function TreeNode({ node, depth, expanded, toggle, currentRoute, onDelete }) {
   return (
@@ -13,6 +16,8 @@ export default function TreeNode({ node, depth, expanded, toggle, currentRoute, 
       {node.folders.map((folder) => {
         const isOpen = expanded.has(folder.path);
         const containsCurrent = folderContains(folder, currentRoute);
+        const folderFiles = collectFolderFiles(folder);
+        const metaOnly = folderFiles.length > 0 && folderFiles.every(isMeta);
         return (
           <li key={folder.path} className="tree-folder">
             <div className={`tree-row${containsCurrent ? ' has-current' : ''}`}>
@@ -25,15 +30,14 @@ export default function TreeNode({ node, depth, expanded, toggle, currentRoute, 
                 <span className={`tree-caret${isOpen ? ' open' : ''}`}>▸</span>
                 <span className="tree-folder-name">{folder.name}</span>
               </button>
-              {onDelete && (
+              {onDelete && !metaOnly && (
                 <button
                   className="tree-del"
                   title={`Delete "${folder.name}" and everything in it`}
                   aria-label={`Delete ${folder.name}`}
                   onClick={(e) => {
                     e.stopPropagation();
-                    const paths = collectFolderFiles(folder);
-                    onDelete(paths, folder.name, paths.length);
+                    onDelete(folderFiles, folder.name, folderFiles.length);
                   }}
                 >
                   🗑
@@ -67,7 +71,7 @@ export default function TreeNode({ node, depth, expanded, toggle, currentRoute, 
               {file.icon && <span className="tree-icon">{file.icon}</span>}
               <span className="tree-file-name">{file.title}</span>
             </NavLink>
-            {onDelete && (
+            {onDelete && !isMeta(file.relPath) && (
               <button
                 className="tree-del"
                 title={`Delete "${file.title}"`}

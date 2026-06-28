@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
-import { importFiles as persistFiles, exportFile } from '../lib/contentSource.js';
+import { importFiles as persistFiles, exportFile, deleteFiles } from '../lib/contentSource.js';
 import { routeForDropped } from '../lib/content.js';
+import { expandBundle, dedupeRelPaths } from '../lib/importing.js';
 
 function basename(rel) {
   const b = (rel || 'note.md').split('/').pop();
@@ -40,10 +41,24 @@ export default function SectionActions({ file }) {
     setBusy(true);
     try {
       const raw = await f.text();
-      const res = await persistFiles([{ relPath: file.relPath, content: raw }]);
-      if (!res || !res.ok) throw new Error((res && res.error) || 'replace failed');
-      // The new file may change its own route via frontmatter; go there.
-      const route = routeForDropped(file.relPath, raw);
+      const bundle = expandBundle(raw);
+      let route;
+      if (bundle && bundle.length) {
+        // Replacing one page with a bundle: import all its pages, then drop the
+        // original if it isn't among them, so it's a true replace (no orphan).
+        const { entries } = dedupeRelPaths(bundle);
+        const res = await persistFiles(entries);
+        if (!res || !res.ok) throw new Error((res && res.error) || 'replace failed');
+        const keep = new Set(entries.map((e) => e.relPath));
+        if (!keep.has(file.relPath)) await deleteFiles([file.relPath]);
+        route = routeForDropped(entries[0].relPath, entries[0].content);
+      } else {
+        // Single page: overwrite this file in place.
+        const res = await persistFiles([{ relPath: file.relPath, content: raw }]);
+        if (!res || !res.ok) throw new Error((res && res.error) || 'replace failed');
+        // The new file may change its own route via frontmatter; go there.
+        route = routeForDropped(file.relPath, raw);
+      }
       window.location.hash = '#' + route;
       window.location.reload();
     } catch (e) {

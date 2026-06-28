@@ -1,100 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
-import matter from 'gray-matter';
 import { routeForDropped } from '../lib/content.js';
 import { importFiles as persistFiles, syncLibrary } from '../lib/contentSource.js';
+import { fileToEntries, dedupeRelPaths } from '../lib/importing.js';
 import { useLibrary } from '../lib/library.js';
-
-// Strip characters that are illegal in Windows paths/filenames.
-function cleanSeg(s) {
-  return String(s)
-    .replace(/[\\/:*?"<>|]/g, '')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
-// Normalize a `section` value (array or "/"-separated string) into levels.
-function sectionLevels(section) {
-  if (Array.isArray(section)) return section.map(cleanSeg).filter(Boolean);
-  if (typeof section === 'string') return section.split('/').map(cleanSeg).filter(Boolean);
-  return [];
-}
-
-// Decide where a dropped file lands: <category>/<...section levels>/<name>.md
-// Category/section come from the file's own frontmatter; default to "Imported".
-// `section` may be a path (string with "/" or an array) for arbitrary nesting.
-function deriveRelPath(fileName, raw) {
-  let data = {};
-  try {
-    data = matter(raw).data || {};
-  } catch {
-    data = {};
-  }
-  const category = cleanSeg(data.category || 'Imported') || 'Imported';
-  const levels = sectionLevels(data.section);
-  let name = cleanSeg(fileName) || 'untitled.md';
-  if (!/\.md$/i.test(name)) name += '.md';
-  return [category, ...levels, name].filter(Boolean).join('/');
-}
-
-// A "bundle" is one file that defines several pages. Marked with `bundle: true`
-// in frontmatter; each top-level `# Heading` becomes its own page, inheriting
-// category/section/icon/tags from the file's frontmatter.
-function expandBundle(raw) {
-  let parsed;
-  try {
-    parsed = matter(raw);
-  } catch {
-    return null;
-  }
-  const fm = parsed.data || {};
-  const isBundle = fm.bundle === true || fm.split === 'h1' || fm.multipage === true;
-  if (!isBundle) return null;
-
-  const lines = parsed.content.split('\n');
-  const pages = [];
-  let cur = null;
-  let inFence = false;
-  for (const line of lines) {
-    if (/^\s*```/.test(line)) inFence = !inFence;
-    const m = !inFence && /^#\s+(.+?)\s*$/.exec(line); // single-# H1 only
-    if (m) {
-      if (cur) pages.push(cur);
-      cur = { title: m[1].replace(/[#*`]/g, '').trim(), body: [] };
-    } else if (cur) {
-      cur.body.push(line);
-    }
-    // Any text before the first H1 is ignored.
-  }
-  if (cur) pages.push(cur);
-  if (pages.length === 0) return null;
-
-  const baseOrder = typeof fm.order === 'number' ? fm.order : 0;
-  const baseSection = sectionLevels(fm.section); // file-level section path
-  return pages.map((pg, i) => {
-    // A heading may itself be a path ("Modeling/Edit Mode/Extrude") to nest
-    // deeper; the last segment is the page title, the rest extend the section.
-    const headParts = pg.title.split('/').map((s) => s.trim()).filter(Boolean);
-    const pageTitle = headParts.length ? headParts[headParts.length - 1] : pg.title;
-    const extra = headParts.slice(0, -1);
-    const levels = [...baseSection, ...extra];
-
-    const pageFm = { title: pageTitle };
-    if (fm.category) pageFm.category = fm.category;
-    if (levels.length) pageFm.section = levels.join('/');
-    if (fm.icon) pageFm.icon = fm.icon;
-    if (Array.isArray(fm.tags)) pageFm.tags = fm.tags;
-    pageFm.order = baseOrder + i + 1;
-    const content = matter.stringify(pg.body.join('\n').trim() + '\n', pageFm);
-    return { relPath: deriveRelPath(pageTitle + '.md', content), content };
-  });
-}
-
-// Turn one dropped file into one or more page entries (expanding bundles).
-function fileToEntries(name, raw) {
-  const expanded = expandBundle(raw);
-  if (expanded && expanded.length) return expanded;
-  return [{ relPath: deriveRelPath(name, raw), content: raw }];
-}
 
 function dragHasFiles(e) {
   return Array.from(e.dataTransfer?.types || []).includes('Files');
@@ -199,19 +107,21 @@ export default function DropZone() {
 
   async function importFiles(droppedFiles) {
     try {
-      const payload = [];
-      let firstRoute = null;
+      const raw0 = [];
       for (const f of droppedFiles) {
         const raw = await f.text();
-        for (const entry of fileToEntries(f.name, raw)) {
-          payload.push(entry);
-          if (!firstRoute) {
-            try {
-              firstRoute = routeForDropped(entry.relPath, entry.content);
-            } catch {
-              /* ignore route derivation issues */
-            }
-          }
+        raw0.push(...fileToEntries(f.name, raw));
+      }
+      // Keep same-batch title collisions from silently overwriting each other.
+      const { entries: payload, renamed } = dedupeRelPaths(raw0);
+
+      let firstRoute = null;
+      for (const entry of payload) {
+        if (firstRoute) break;
+        try {
+          firstRoute = routeForDropped(entry.relPath, entry.content);
+        } catch {
+          /* ignore route derivation issues */
         }
       }
 
@@ -219,7 +129,8 @@ export default function DropZone() {
       if (!data || !data.ok) throw new Error((data && data.error) || 'import failed');
 
       const n = data.written.length;
-      setToast({ type: 'ok', msg: `Imported ${n} file${n > 1 ? 's' : ''}. Refreshing…` });
+      const note = renamed > 0 ? ` (${renamed} renamed to avoid duplicate titles)` : '';
+      setToast({ type: 'ok', msg: `Imported ${n} file${n > 1 ? 's' : ''}${note}. Refreshing…` });
       if (firstRoute) window.location.hash = '#' + firstRoute;
       // Full reload so the library re-reads and picks up the new file(s).
       setTimeout(() => window.location.reload(), 800);
@@ -244,11 +155,12 @@ export default function DropZone() {
         return;
       }
 
-      const payload = [];
+      const raw0 = [];
       for (const f of fileObjs) {
         const raw = await f.text();
-        payload.push(...fileToEntries(f.name, raw));
+        raw0.push(...fileToEntries(f.name, raw));
       }
+      const { entries: payload, renamed } = dedupeRelPaths(raw0);
 
       // Estimate how many existing pages would be removed (excludes _meta).
       const keep = new Set(payload.map((p) => p.relPath));
@@ -259,6 +171,9 @@ export default function DropZone() {
       const ok = window.confirm(
         `Replace your library with the ${payload.length} page(s) in this folder?\n\n` +
           `• ${payload.length} page(s) will be added or updated\n` +
+          (renamed > 0
+            ? `• ${renamed} had duplicate titles and were renamed to avoid overwriting\n`
+            : '') +
           `• ${removing} existing page(s) not in the folder will be removed\n` +
           `• The built-in Authoring Kit is kept\n\n` +
           `This can't be undone.`
