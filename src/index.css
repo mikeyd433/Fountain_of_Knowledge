@@ -942,6 +942,13 @@ html.dark .shiki span {
   padding: 0 4px;
   font-size: 10px;
 }
+.app-version {
+  padding: 6px 14px 10px;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  color: var(--text-faint);
+  opacity: 0.75;
+}
 
 .dropzone-overlay {
   position: fixed;

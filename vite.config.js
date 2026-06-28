@@ -6,6 +6,10 @@ import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
+// App version, read from package.json and surfaced in the UI so you can confirm
+// a rebuilt/updated app is actually running the new code.
+const pkg = JSON.parse(fs.readFileSync(path.resolve(__dirname, 'package.json'), 'utf8'));
+
 // Dev-only endpoint: accepts markdown dropped in the browser and writes it
 // into src/content/ so it becomes a permanent part of the library.
 // Shared content-folder operations, also implemented in electron/main.cjs.
@@ -162,6 +166,7 @@ export default defineConfig({
   plugins: [react(), contentImporter()],
   define: {
     global: 'globalThis',
+    __APP_VERSION__: JSON.stringify(pkg.version),
   },
   resolve: {
     alias: {

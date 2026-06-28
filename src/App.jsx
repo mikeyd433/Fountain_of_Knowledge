@@ -116,6 +116,7 @@ function Sidebar() {
       <div className="sidebar-hint">
         ＋ Drag <code>.md</code> files to add · a folder to replace all
       </div>
+      <div className="app-version">v{__APP_VERSION__}</div>
     </aside>
   );
 }
